@@ -1,7 +1,9 @@
 let request = require('request');
 
 module.exports = class Cherwell {
-	access_token = '';	
+	access_token = '';
+	refresh_token = '';
+	expires_in = '';	
 	#user = "";
 	#password = "";
 	#client_id = "";
@@ -23,7 +25,7 @@ module.exports = class Cherwell {
 	sends a request to Cherwell for an access token
 	runs asynchronously, returning a Promise. if rejected, throws an error.
 	**********/
-	async getToken() {
+	async requestToken() {
 		return new Promise( (resolve, reject) => {
 			
 			//set options for the request call
@@ -32,6 +34,7 @@ module.exports = class Cherwell {
 				method: 'POST',
 				headers: {
 					'api-key': this.client_id,
+					'Content-Type': 'x-www-form-urlencoded'
 				},
 				form: {
 					grant_type: 'password',
@@ -40,7 +43,6 @@ module.exports = class Cherwell {
 					password: this.password,
 				}
 			};
-
 			//send the request and set the promise based on the success or fail
 			request(options, (err, res, body) => {
 				//parse the body
@@ -48,13 +50,33 @@ module.exports = class Cherwell {
 				//if it's successful, set the acces_token and resolve
 				if(res.statusCode == 200) {
 					this.access_token = body.access_token;
+					this.refresh_token = body.refresh_token;
+					this.expires_in = body.expires_in;
 					resolve();
 				}
 				//if not, reject with the error that was sent
 				else {
-					reject(new Error(`cherwell/index.js:getToken: there was an error.\nstatusCode: ${res.statusCode} error: ${body.error}\n${error.description}`));
+					reject({ status: res.statusCode, errorCode: body.errorCode, message: body.errorMessage });
 				}
 			});
+		});
+	}
+
+	/*********
+	checkToken
+	checks for a token and if the access token has expired
+	**********/
+	async checkToken() {
+		return new Promise( (resolve, reject) => {
+			//check for a token or if it's expired
+			if(this.access_token == "" /*|| expired*/) {
+				//if it is, request a new one
+				this.requestToken().then( () => {
+				resolve();
+			}).catch( error => {
+					reject(error);
+				});
+			} else { resolve(); }
 		});
 	}
 
@@ -83,7 +105,7 @@ module.exports = class Cherwell {
 				body = JSON.parse(body);
 				//if the status isn't OK, reject with the error that was sent
 				if(res.statusCode !== 200) {
-					reject(new Error(`cherwell/index.js:getObjectId: there was an error.\nstatusCode: ${res.statusCode} error: ${body.error}\n${error.description}`));
+					reject({ status: res.statusCode, errorCode: body.errorCode, message: body.errorMessage });
 				}
 				//if it is, resolve and send the ID
 				else {
@@ -101,10 +123,6 @@ module.exports = class Cherwell {
 	params
 		obj_id: the business object ID
 		required: if set to true, Cherwell returns only the fields that are required. set to false by default 
-
-	##TODO: REWRITE THIS TO 
-					1. GET THE OBJECT ID 
-					2. TAKE FIELD NAMES/IDS 
 	**********/
 	async getObjectTemplate(obj_name, required = false, fields = []) {
 		return new Promise( (resolve, reject) => {
@@ -121,9 +139,10 @@ module.exports = class Cherwell {
 						bearer: this.access_token 
 					},
 					form: {
-					  busObId: objid,
-					  includeRequired: required,
-					  includeAll: !required
+						busObId: objid,
+						fields: fields,
+						includeRequired: required,
+						includeAll: !required
 					}
 				};
 
@@ -133,7 +152,7 @@ module.exports = class Cherwell {
 					body = JSON.parse(body);
 					//if the status isn't OK, reject with the error that was sent
 					if ( body.hasError ) {
-						reject(new Error(`cherwell/index.js:getObjectTemplate: there was an error.\nstatusCode: ${res.statusCode} error: ${body.errorCode}\n${body.errorMessage}`));
+						reject({ status: res.statusCode, errorCode: body.errorCode, message: body.errorMessage });
 					} 
 					//if it is, resolve and send the object ID and template
 					else {
@@ -171,9 +190,6 @@ module.exports = class Cherwell {
 	params
 		obj_name: name of the business object
 		data: the data for the object fields
-
-	##TODO: FINISH THIS AFTER MODIFYING OTHER METHODS NEEDED
-					(getObjectTemplate)
 	**********/
 	async createObject(obj_name, data) {
 		return new Promise( (resolve, reject) => {
@@ -182,11 +198,12 @@ module.exports = class Cherwell {
 				//set the object values from the result
 				let obj = { 
 					busObId: result.objId,
-					fields: result.template.fields
+					fields: result.template.fields,
+					persist: true
 				};
 				//then set the field values from the data
 				obj.fields.forEach(field =>  {
-					data.forEach(item => {
+					data.fields.forEach(item => {
 						if(item.name == field.name) {
 							field.value = item.value;
 						}
@@ -198,15 +215,15 @@ module.exports = class Cherwell {
 		});
 	}
 
-		/*********
-		async submitObject
-		sends the object to Cherwell for creation
-		runs asynchronously, returning a Promise. if rejected, throws an error.
+	/*********
+	async submitObject
+	sends the object to Cherwell for creation
+	runs asynchronously, returning a Promise. if rejected, throws an error.
 
-		params
-			obj: the business object to be submitted
-			persist: if false, Cherwell will cache and send back a cache key. if true, Cherwell saves permanently. set to true by default.
-		**********/
+	params
+		obj: the business object to be submitted
+		persist: if false, Cherwell will cache and send back a cache key. if true, Cherwell saves permanently. set to true by default.
+	**********/
 	async submitObject(obj, persist = true) {
 		return new Promise( (resolve, reject) => {
 			//set the persist value
@@ -226,9 +243,9 @@ module.exports = class Cherwell {
 
 			request(options, (err, res, body) => {
 				body = JSON.parse(body);
-				console.log(body);
-				if( body.hasError ) {
-					reject(new Error(`cherwell/index.js:getObjectTemplate: there was an error.\nstatusCode: ${res.statusCode} error: ${body.errorCode}\n${body.errorMessage}`));
+				if( res.statusCode != 200 ) {
+					let msg = body.Message ? body.Message : body.errorMessage;
+					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
 				}
 				else {
 					resolve(body);

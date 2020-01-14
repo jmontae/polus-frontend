@@ -3,7 +3,7 @@ import EmailRedirect from "../components/EmailRedirect.vue"
 
 const routes = [
 	{ path: '/', component: Home },
-	{ path: '/help/:service/:category/:subcategory', component: EmailRedirect }
+	{ path: '/:service/:category/:subcategory', component: EmailRedirect }
 ];
 
 export default routes;
