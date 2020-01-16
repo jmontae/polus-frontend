@@ -26,4 +26,4 @@ app.post('/update', (req, res) => {
 	}
 });
 
-app.listen(port)
+app.listen(port);

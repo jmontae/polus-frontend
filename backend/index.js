@@ -109,5 +109,5 @@ app.get('/get/:object', (req, res) => {
 });
 
 app.listen(port, () => {
-	console.log('server listening on port 4000');
+	console.log(`server listening on port ${port}`);
 });
