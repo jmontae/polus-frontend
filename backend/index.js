@@ -26,13 +26,12 @@ app.get('/new_session', (req, res) => {
 		cherwell.requestToken().then( () => {
 			//send back a 200 status if successful
 			console.log("access token receieved.");
+			res.status(200).send();
 		}).catch( error => { 
 			//send a 500 status if not, with the error
 			res.status(500).send(error);
 		});
-	}
-
-	res.status(200).send();
+	} else { res.status(200).send(); }
 });
 
 /**********
