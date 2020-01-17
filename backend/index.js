@@ -108,6 +108,10 @@ app.get('/get/:object', (req, res) => {
 	});
 });
 
+app.get('/', (req, res) => {
+	res.status(200).send('this is the cherwell app api endpoint. nothing to see here.');
+});
+
 app.listen(port, () => {
 	console.log(`server listening on port ${port}`);
 });

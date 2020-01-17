@@ -26,4 +26,8 @@ app.post('/update', (req, res) => {
 	}
 });
 
+app.get('/', (req, res) => {
+	res.status(200).send('this is the cherwell app webhook endpoint. nothing to see here.');
+});
+
 app.listen(port);

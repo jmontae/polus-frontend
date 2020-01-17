@@ -1,6 +1,6 @@
 //environment variables
 import Vue from 'vue'
-import App from './FullApp.vue'
+import App from './App.vue'
 import Router from "vue-router"
 
 //components for routes
