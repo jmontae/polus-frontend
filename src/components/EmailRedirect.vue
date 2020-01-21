@@ -23,7 +23,11 @@ export default {
 			let text = 
 			`Team: ${this.teamName}
 
-This is an email, to be sent to Cherwell.`;
+-- enter your email below this line--
+
+
+
+`;
 
 			return encodeURI(text);
 		},
@@ -31,7 +35,7 @@ This is an email, to be sent to Cherwell.`;
 			return this.service + " / " + this.category + " / " + this.subcategory;
 		},
 		mailTo: function() {
-			return `mailto:ATECSupport@utdallas.edu?subject=${this.subject}&body=${this.body}`;
+			return `mailto:atec.atlas@utdallas.edu?subject=${this.subject}&body=${this.body}`;
 		}
 	}
 }

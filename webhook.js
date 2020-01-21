@@ -30,4 +30,7 @@ app.get('/', (req, res) => {
 	res.status(200).send('this is the cherwell app webhook endpoint. nothing to see here.');
 });
 
+app.get('/update', (req, res) => {
+    res.status(200).send("this route works fine...");
+});
 app.listen(port);

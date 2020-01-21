@@ -13,7 +13,7 @@ import "@fortawesome/fontawesome-free/css/all.css"
 Vue.config.productionTip = false;
 Vue.use(Router);
 
-const router = new Router({ routes });
+const router = new Router({ base: '/help/', mode: 'history', routes });
 
 new Vue({
 	router,
