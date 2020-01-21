@@ -1,10 +1,11 @@
 require('dotenv').config();
 let child_process = require('child_process'),
+bodyparser = require('body-parser');
 user = process.env.GITHUB_USER,
 port = process.env.WEBHOOK_PORT;
 
 let app = require('express')();
-
+app.use(bodyparser.json());
 /**
  * post /update
  * when there's been an update to the repo, this endpoint is hit.
