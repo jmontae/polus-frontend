@@ -14,7 +14,7 @@ app.post('/update', (req, res) => {
 	let sender = req.body.sender,
 	branch = req.body.ref;
 
-	if(branch.indexOf('master') > -1 && sender.login === user) {
+	if(sender.login === user) {
 		child_process.exec('./deploy.sh', (err, stdout, stderr) => {
 			if(err) {
 				console.error(err);
