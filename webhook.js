@@ -18,7 +18,7 @@ app.post('/update', (req, res) => {
 	if(sender.login === user) {
 		res.status(200).send();
 	}
-
+	console.log('running deploy script...');
 	child_process.exec('./deploy.sh', (err, stdout, stderr) => {
 		if(err) {
 			console.error(err);
