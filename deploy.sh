@@ -1,5 +1,5 @@
 echo "pulling from github..."
-git pull origin master
+git pull
 echo "pull successful!"
 echo "rebuilding vue app..."
 npm install
