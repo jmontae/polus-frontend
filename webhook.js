@@ -16,15 +16,16 @@ app.post('/update', (req, res) => {
 	branch = req.body.ref;
 
 	if(sender.login === user) {
-		child_process.exec('./deploy.sh', (err, stdout, stderr) => {
-			if(err) {
-				console.error(err);
-				return res.send(500);
-			} else {
-				res.send(200);
-			}
-		});
+		res.status(200).send();
 	}
+
+	child_process.exec('./deploy.sh', (err, stdout, stderr) => {
+		if(err) {
+			console.error(err);
+		} else {
+			console.log('deployment completed');
+		}
+	});
 });
 
 app.get('/', (req, res) => {
