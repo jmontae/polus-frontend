@@ -35,7 +35,7 @@ export default {
 			return this.service + " / " + this.category + " / " + this.subcategory;
 		},
 		mailTo: function() {
-			return `mailto:atec.atlas@utdallas.edu?&body=${this.body}`;
+			return `mailto:atec.atlas@utdallas.edu?body=${this.body}`;
 		}
 	}
 }
