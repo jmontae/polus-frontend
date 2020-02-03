@@ -172,7 +172,7 @@ module.exports = class Cherwell {
 		obj_name: name of the business object
 		required: if set to true, Cherwell returns only the fields that are required. set to true by default 
 	**********/
-	async getFields(obj_name, required = true) {
+	async getFields(obj_name, required = false) {
 		return new Promise( (resolve, reject) => {
 				//then get the object template based on the name
 				this.getObjectTemplate(obj_name, required).then((result) => {
@@ -194,18 +194,22 @@ module.exports = class Cherwell {
 	async createObject(obj_name, data) {
 		return new Promise( (resolve, reject) => {
 			//first, get the object template
-			this.getObjectTemplate(obj_name, true).then((result) => {
+			this.getObjectTemplate(obj_name).then((result) => {
 				//set the object values from the result
+				let fields = result.template.fields;
 				let obj = { 
 					busObId: result.objId,
-					fields: result.template.fields,
-					persist: true
+					fields: []
 				};
 				//then set the field values from the data
-				obj.fields.forEach(field =>  {
+				fields.forEach(field =>  {
 					data.fields.forEach(item => {
 						if(item.name == field.name) {
+							//insert the value, and set dirty to true
 							field.value = item.value;
+							field.dirty = true;
+							//add field to object array
+							obj.fields.push(field);
 						}
 					});
 				});
