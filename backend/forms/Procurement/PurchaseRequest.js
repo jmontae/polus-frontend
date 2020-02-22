@@ -1,9 +1,24 @@
 module.exports = {
 	'name': 'PurchaseRequest',
+	'title': 'Purchase Request Form',
 	'service': 'Procurement',
 	'category': 'Purchasing',
 	'subcategory': 'Purchase Request',
-	'type': 'HRCase',
+
+	'fields': [
+		{
+			'name': 'OwnedByTeam',
+			'value': 'ATEC Procurement'
+		},
+		{
+			'name': 'Priority',
+			'value': '3'
+		},
+		{
+			'name': 'CallSource',
+			'value': 'Portal'
+		}
+	],
 
 	'queries': [
 		{

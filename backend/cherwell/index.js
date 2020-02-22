@@ -8,6 +8,9 @@ module.exports = class Cherwell {
 	#password = "";
 	#client_id = "";
 	base_url = "";
+	tenant = "";
+	incidentSubcategories = [];
+	hrCaseSubcategories = [];
 
 	/*********
 	constructor
@@ -18,6 +21,19 @@ module.exports = class Cherwell {
 		this.password = params.password;
 		this.client_id = params.client_id;
 		this.base_url = params.base_url;
+		this.tenant = params.tenant;
+		//request a token
+		this.requestToken().then( () => {
+			console.log('connection established; token received');
+			//get the incident service catalog
+			this.getIncidentSubcategories().then( objarr => {
+				this.incidentSubcategories = objarr;
+			}).catch( error => { console.log(error); });
+			//get the HRCase service
+			this.getHRCaseSubcategories().then( objarr => {
+				this.hrCaseSubcategories = objarr;
+			}).catch( error => { console.log(error); });
+		}).catch( error =>  { console.log(error); });
 	}
 
 	/*********
@@ -30,7 +46,7 @@ module.exports = class Cherwell {
 			
 			//set options for the request call
 			let options = {
-				url: `${this.base_url}/token`,
+				url: `${this.base_url}/CherwellAPI/token`,
 				method: 'POST',
 				headers: {
 					'api-key': this.client_id,
@@ -56,6 +72,7 @@ module.exports = class Cherwell {
 				}
 				//if not, reject with the error that was sent
 				else {
+					console.log(res);
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: body.errorMessage });
 				}
 			});
@@ -72,8 +89,8 @@ module.exports = class Cherwell {
 			if(this.access_token == "" /*|| expired*/) {
 				//if it is, request a new one
 				this.requestToken().then( () => {
-				resolve();
-			}).catch( error => {
+					resolve();
+				}).catch( error => {
 					reject(error);
 				});
 			} else { resolve(); }
@@ -92,7 +109,7 @@ module.exports = class Cherwell {
 		return new Promise( (resolve, reject) => {
 			//set the options object for the request call
 			let options = {
-				url: `${this.base_url}/api/V1/getbusinessobjectsummary/busobname/${obj_name}`,
+				url: `${this.base_url}/CherwellAPI/api/V1/getbusinessobjectsummary/busobname/${obj_name}`,
 				method: 'GET',
 				auth: {
 					'bearer': this.access_token 
@@ -130,7 +147,7 @@ module.exports = class Cherwell {
 			this.getObjectId(obj_name).then( objid => { 
 				//set the options for the request call
 				let options = {
-					url: `${this.base_url}/api/V1/getbusinessobjecttemplate`,
+					url: `${this.base_url}/CherwellAPI/api/V1/getbusinessobjecttemplate`,
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
@@ -206,6 +223,7 @@ module.exports = class Cherwell {
 					data.fields.forEach(item => {
 						if(item.name == field.name) {
 							//insert the value, and set dirty to true
+							if(item.name == "Description") { field.html = item.html; }
 							field.value = item.value;
 							field.dirty = true;
 							//add field to object array
@@ -230,11 +248,98 @@ module.exports = class Cherwell {
 	**********/
 	async submitObject(obj, persist = true) {
 		return new Promise( (resolve, reject) => {
-			//set the persist value
-			obj.persist = persist;
-			//set the options for the request call
+			try {
+				//set the persist value
+				obj.persist = persist;
+				console.log(obj);
+				//set the options for the request call
+				let options = {
+					url: `${this.base_url}/CherwellAPI/api/V1/savebusinessobject`,
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					auth: {
+						bearer: this.access_token
+					},
+					form: obj
+				};
+
+				request(options, (err, res, body) => {
+					body = JSON.parse(body);
+					if( res.statusCode != 200 ) {
+						console.log(body);
+						let msg = body.Message ? body.Message : body.errorMessage;
+						reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
+					}
+					else {
+						resolve(body);
+					}
+				});
+			}
+			catch(error) {
+				console.log('error: \n', error);
+				reject(error);
+			}
+		});
+	}
+
+	/*********
+	async processFormData
+	takes the form data sent from the client and processes it for submission to Cherwell
+	runs asynchronously, returning a Promise with the fields array. if rejected, throws an error.
+
+	params
+		data: the form data received from the client
+	**********/
+	async processFormData(data) {
+		return new Promise( (resolve, reject) => {
+			//this try-catch block is in case we get some junk that we shouldn't
+			try {
+				if(!data) { reject(new Error('no form data given')); }
+				else {
+					let queries = "";
+					//process the form queries
+					data.queries.forEach( query => {
+						//if a query has a fieldName, add it directly to the field array
+						if(query.fieldName) {
+							data.fields.push({ name: query.fieldName, value: query.value });
+						}
+						//if value is an array, convert it to string and add a space after commas
+						if (typeof query.value == "Array") {
+							query.value = query.value.toString();
+							query.value.replace(",", ", ");
+							console.log(query.value);
+						} 
+						queries += `<p><b>${query.text}</b><br />${query.value}</p>`;
+					});
+					//once all of the queries have been processed, add the form string to the Description and the classifications
+					data.fields.push({ name: `${ data.type == "HRCase" ? 'CaseType' : 'Service' }`, value: data.service }, 
+						{ name: "Category", value: data.category }, 
+						{ name: "Subcategory", value: data.subcategory },
+						{ name: 'Description', value: queries },
+						{ name: 'ShortDescription', value: data.title },
+						{ name: 'Tenant', value: data.tenant });
+					resolve(data);
+				}
+			} catch(error) {
+				console.log('an error occured.');
+				console.log(error);
+				reject(error);
+			}
+		});
+	}
+
+	/*********
+	async getIncidentSubcategories
+	gets the subcategory table for Incidents, filtered by tenant
+	runs asynchronously, returning a Promise with the array of subcategory business objects.
+	**********/
+	async getIncidentSubcategories() {
+		return new Promise ( (resolve, reject) => {
+			//create an options object for the request
 			let options = {
-				url: `${this.base_url}/api/V1/savebusinessobject`,
+				url: `${this.base_url}/CherwellAPI/api/V1/getsearchresults`,
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -242,19 +347,113 @@ module.exports = class Cherwell {
 				auth: {
 					bearer: this.access_token
 				},
-				form: obj
+				form: {
+  				"busObId": "934986ba1e6ea051a9def5461fbe8d4434cd5c3b45", //IncidentSubcategory
+  				"fields": [
+    				"9383926e91c152713807534b1bb2833dea26addd52", //Service (the Incident Category)
+ 						"94587716d79a903ab210be471e9716eafd33b585f8" //ServiceClassification (the Incident Service)
+  				],
+				  "filters": [
+				    {
+				      "fieldId": "943af1e9f1743e5417b8d04ab3a4cceb53e2beb299", //filter by the Tenant field
+				      "operator": "eq",
+				      "value": this.tenant
+				    }
+				  ],
+				  "includeSchema": false
+				}
 			};
-
+			//make the request to Cherwell
 			request(options, (err, res, body) => {
 				body = JSON.parse(body);
-				if( res.statusCode != 200 ) {
+				//if the status isn't 200, reject it
+				if (res.statusCode != 200 ) {
 					let msg = body.Message ? body.Message : body.errorMessage;
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
-				}
-				else {
-					resolve(body);
+				} else {
+				//if it is, resolve with the businessObjects array
+				resolve(body['businessObjects']);
 				}
 			});
 		});
+	}
+
+	/*********
+	async getHRCaseSubcategories
+	gets the subcategory table for HRCases, filtered by tenant
+	runs asynchronously, returning a Promise with the array of subcategory business objects.
+	**********/
+	async getHRCaseSubcategories() {
+		return new Promise ( (resolve, reject) => {
+			//create an options object for the request
+			let options = {
+				url: `${this.base_url}/CherwellAPI/api/V1/getsearchresults`,
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				auth: {
+					bearer: this.access_token
+				},
+				form: {
+				  "busObId": "941feae60c7618e5ec4d7944488006cecc9f01b40a", //CaseSubcategory
+				  "fields": [
+				    "941feb0185935188c7d4994fde91d423681aae2502", //Category
+				 		"941feb0506018ccc201f5c48b6bc431c5f70afa43a", //Case Type
+				  	"941feb07a99610373464554273990bbd18cffb90d6" //Default Team
+				  ],
+				  "filters": [
+				    {
+				      "fieldId": "943c7e1b7385124f30216f4d0385b3896435977789", //filter by the Tenant field
+				      "operator": "eq",
+				      "value": "ATEC"
+				    }
+				  ],
+				  "includeSchema": false,
+				  "sorting": [
+				    {
+				      "fieldId": "string",
+				      "sortDirection": 0
+				    }
+				  ]
+				}
+			};
+			//make the request to Cherwell
+			request(options, (err, res, body) => {
+				body = JSON.parse(body);
+				//if the status isn't 200, reject it
+				if (res.statusCode != 200 ) {
+					let msg = body.Message ? body.Message : body.errorMessage;
+					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
+				} else {
+				//if it is, resolve with the businessObjects array
+				resolve(body['businessObjects']);
+				}
+			});
+		});
+	}
+
+	isSubcategory(subcategory) {
+		let found = false, type = null, team = null;
+		//check the incident subcategories
+		this.incidentSubcategories.forEach( object => {
+			if( object.busObPublicId == subcategory ) { 
+				found = true, type = "Incident"; 
+				object.fields.forEach( field => {
+					if (field.name = 'DefaultTeam') { team = field.value; }
+				});
+			}
+		});
+		//check the HRCase subcategories
+		this.hrCaseSubcategories.forEach( object => {
+			if( object.busObPublicId == subcategory ) { 
+				found = true, type = "HRCase"; 
+				object.fields.forEach( field => {
+					if (field.name = 'DefaultTeam') { team = field.value; }
+				});
+			}
+		});
+		//return the found value
+		return { found, type, team };
 	}
 }

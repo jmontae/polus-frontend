@@ -11,4 +11,11 @@
 </script>
 
 <style>
+.app {
+	
+}
+
+.container {
+	padding-top: 40px;
+}
 </style>

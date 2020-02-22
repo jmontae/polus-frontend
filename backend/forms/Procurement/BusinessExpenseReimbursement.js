@@ -1,9 +1,26 @@
 module.exports = {
 	'name': 'BusinessExpenseReimbursement',
+	'type': 'HRCase',
+	'title': "Business Expense Reimbursement",
 	'service': 'Procurement',
 	'category': 'Reimbursements',
 	'subcategory': 'Business Expense Reimbursement',
-	'type': 'HRCase',
+	'tenant': 'ATEC',
+
+	'fields': [
+		{
+			'name': 'OwnedByTeam',
+			'value': 'ATEC Procurement'
+		},
+		{
+			'name': 'Priority',
+			'value': '3'
+		},
+		{
+			'name': 'CallSource',
+			'value': 'Portal'
+		}
+	],
 
 	'queries': [
 		{
@@ -11,7 +28,7 @@ module.exports = {
 			'text': 'What is your name?'
 		},
 		{
-			'type': 'radio',
+			'type': 'checkbox',
 			'text': 'Would you like to submit a reimbursement?',
 			'options': ["yes", "no", "i don't know"]
 
