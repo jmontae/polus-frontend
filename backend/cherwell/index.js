@@ -1,4 +1,8 @@
-let request = require('request');
+let request = require('request'),
+glob = require('glob'),
+path = require('path');
+const formHandler = require('../forms');
+let { TreeNode, Tree } = require('../util/tree.js');
 
 module.exports = class Cherwell {
 	access_token = '';
@@ -9,8 +13,8 @@ module.exports = class Cherwell {
 	#client_id = "";
 	base_url = "";
 	tenant = "";
-	incidentSubcategories = [];
-	hrCaseSubcategories = [];
+	incidentCatalog = {};
+	hrCaseCatalog = {};
 
 	/*********
 	constructor
@@ -22,17 +26,22 @@ module.exports = class Cherwell {
 		this.client_id = params.client_id;
 		this.base_url = params.base_url;
 		this.tenant = params.tenant;
+		//load the forms
+		glob.sync('./backend/forms/*/*.js').forEach((file) => {
+			let form = require( path.resolve(file) );
+			formHandler.add(form);
+		});
 		//request a token
 		this.requestToken().then( () => {
 			console.log('connection established; token received');
 			//get the incident service catalog
-			this.getIncidentSubcategories().then( objarr => {
-				this.incidentSubcategories = objarr;
+			this.getIncidentCatalog().then( catalog => {
+				this.incidentCatalog = catalog;
 			}).catch( error => { console.log(error); });
 			//get the HRCase service
-			this.getHRCaseSubcategories().then( objarr => {
-				this.hrCaseSubcategories = objarr;
-			}).catch( error => { console.log(error); });
+			// this.getHRCaseCatalog().then( obj => {
+			// 	this.hrCaseCatalog = obj;
+			// }).catch( error => { console.log(error); });
 		}).catch( error =>  { console.log(error); });
 	}
 
@@ -43,7 +52,7 @@ module.exports = class Cherwell {
 	**********/
 	async requestToken() {
 		return new Promise( (resolve, reject) => {
-			
+			let success = false;
 			//set options for the request call
 			let options = {
 				url: `${this.base_url}/CherwellAPI/token`,
@@ -251,7 +260,6 @@ module.exports = class Cherwell {
 			try {
 				//set the persist value
 				obj.persist = persist;
-				console.log(obj);
 				//set the options for the request call
 				let options = {
 					url: `${this.base_url}/CherwellAPI/api/V1/savebusinessobject`,
@@ -285,6 +293,50 @@ module.exports = class Cherwell {
 	}
 
 	/*********
+	getForm
+	get the form from the form handler if it exists. if it doesn't, send the default form for that business object
+
+	params
+		data: the form data received from the client
+	**********/
+	getForm(params, callback) {
+		//get the classification parameters
+		let service = params.service,
+		category = params.category,
+		subcategory = params.subcategory;
+		try {
+			if(service in formHandler.forms) {
+				//check and see if there's a form
+				let form = formHandler.forms[service].find(form => (form.category == category && form.subcategory == subcategory));
+				//if there is, run the callback with the form
+				if(form) {
+					callback(null, form);
+				} else { callback({status: 500, message: "this categorization doesn't exist" }, null); }
+			} else {
+				//if there was no form, check the subcategories to get the default form
+				let result = this.isSubcategory(subcategory);
+
+				if(result.found) {
+					let form = formHandler.forms.defaults.find(form => form.type == result.type);
+					if(form) { 
+						//set the classification of the request, and send the form to the callback
+						form.service = service, form.category = category, form.subcategory = subcategory;
+						form.tenant = this.tenant;
+						form.fields.push({ name: "OwnedByTeam", value: result.team });
+						
+						callback(null, form); 
+					}
+				} else {
+					callback({ status: 404, message: "this categorization doesn't exist" }, null);
+				}
+			}
+		} catch(error) {
+			console.log('there was an error:\n', error);
+			callback({ status: 500, message: error }, null);
+		}
+	}
+
+	/*********
 	async processFormData
 	takes the form data sent from the client and processes it for submission to Cherwell
 	runs asynchronously, returning a Promise with the fields array. if rejected, throws an error.
@@ -306,20 +358,30 @@ module.exports = class Cherwell {
 							data.fields.push({ name: query.fieldName, value: query.value });
 						}
 						//if value is an array, convert it to string and add a space after commas
-						if (typeof query.value == "Array") {
-							query.value = query.value.toString();
-							query.value.replace(",", ", ");
-							console.log(query.value);
+						if ( Array.isArray(query.value) ) {
+							query.value = query.value.toString().replace(/\,/g, ", ");
 						} 
+
 						queries += `<p><b>${query.text}</b><br />${query.value}</p>`;
 					});
 					//once all of the queries have been processed, add the form string to the Description and the classifications
 					data.fields.push({ name: `${ data.type == "HRCase" ? 'CaseType' : 'Service' }`, value: data.service }, 
 						{ name: "Category", value: data.category }, 
 						{ name: "Subcategory", value: data.subcategory },
-						{ name: 'Description', value: queries },
-						{ name: 'ShortDescription', value: data.title },
 						{ name: 'Tenant', value: data.tenant });
+
+					//if there's no Description in fields, set it to the queries
+					let desc = data.fields.find(field => field.name == "Description");
+					if(!desc) {
+						data.fields.push({ name: 'Description', value: queries });
+					}
+
+					//if there's no ShortDescription fields, set it to the title.
+					let shortdesc = data.fields.find(field => field.name == "ShortDescription");
+					if(!shortdesc) {
+						data.fields.push({ name: 'ShortDescription', value: data.title });
+					}
+
 					resolve(data);
 				}
 			} catch(error) {
@@ -331,11 +393,11 @@ module.exports = class Cherwell {
 	}
 
 	/*********
-	async getIncidentSubcategories
+	async getIncidentCatalog
 	gets the subcategory table for Incidents, filtered by tenant
 	runs asynchronously, returning a Promise with the array of subcategory business objects.
 	**********/
-	async getIncidentSubcategories() {
+	async getIncidentCatalog() {
 		return new Promise ( (resolve, reject) => {
 			//create an options object for the request
 			let options = {
@@ -348,14 +410,14 @@ module.exports = class Cherwell {
 					bearer: this.access_token
 				},
 				form: {
-  				"busObId": "934986ba1e6ea051a9def5461fbe8d4434cd5c3b45", //IncidentSubcategory
+  				"busObId": "934986ba1e6ea051a9def5461fbe8d4434cd5c3b45", 
   				"fields": [
-    				"9383926e91c152713807534b1bb2833dea26addd52", //Service (the Incident Category)
- 						"94587716d79a903ab210be471e9716eafd33b585f8" //ServiceClassification (the Incident Service)
+    				"9383926e91c152713807534b1bb2833dea26addd52", 
+ 						"94587716d79a903ab210be471e9716eafd33b585f8" 
   				],
 				  "filters": [
 				    {
-				      "fieldId": "943af1e9f1743e5417b8d04ab3a4cceb53e2beb299", //filter by the Tenant field
+				      "fieldId": "943af1e9f1743e5417b8d04ab3a4cceb53e2beb299", 
 				      "operator": "eq",
 				      "value": this.tenant
 				    }
@@ -371,8 +433,26 @@ module.exports = class Cherwell {
 					let msg = body.Message ? body.Message : body.errorMessage;
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
 				} else {
-				//if it is, resolve with the businessObjects array
-				resolve(body['businessObjects']);
+					//if it is, create the catalog
+					let catalog = new Tree('Incident');
+					//go through each object to add the layers
+					body['businessObjects'].forEach( subcat => {
+						//get the categorization
+						console.log(subcat);
+						let subcategory = subcat.busObPublicId,
+						category = subcat.fields.find( el => el.name == "Service"),
+						service = subcat.fields.find( el => el.name == "ServiceClassification");
+						
+						console.log('category: ', category);
+						console.log('service: ', service);
+
+						catalog._addNode(service, 'Incident');
+						catalog._addNode(category, service);
+						catalog._addNode(subcat, category);
+					});
+					//when it's created, send it in the resolve method
+					console.log(catalog);
+					resolve(catalog);
 				}
 			});
 		});
@@ -383,7 +463,7 @@ module.exports = class Cherwell {
 	gets the subcategory table for HRCases, filtered by tenant
 	runs asynchronously, returning a Promise with the array of subcategory business objects.
 	**********/
-	async getHRCaseSubcategories() {
+	async getHRCaseCatalog() {
 		return new Promise ( (resolve, reject) => {
 			//create an options object for the request
 			let options = {
@@ -406,7 +486,7 @@ module.exports = class Cherwell {
 				    {
 				      "fieldId": "943c7e1b7385124f30216f4d0385b3896435977789", //filter by the Tenant field
 				      "operator": "eq",
-				      "value": "ATEC"
+				      "value": this.tenant
 				    }
 				  ],
 				  "includeSchema": false,
@@ -426,8 +506,23 @@ module.exports = class Cherwell {
 					let msg = body.Message ? body.Message : body.errorMessage;
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
 				} else {
-				//if it is, resolve with the businessObjects array
-				resolve(body['businessObjects']);
+					//if it is, create the catalog
+					let catalog = new Tree('HRCase');
+					//go through each object to add the layers
+					body['businessObjects'].forEach( subcat => {
+						//get the categorization
+				
+						let subcategory = subcat.busObPublicId,
+						category = subcat.fields.find( el => el.name == "Category"),
+						service = subcat.fields.find( el => el.name == "CaseType");
+						
+						catalog._addNode(service, 'HRCase');
+						catalog._addNode(category, service);
+						catalog._addNode(subcat, category);
+
+						console.log(catalog);
+					});
+					resolve(catalog);
 				}
 			});
 		});

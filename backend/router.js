@@ -9,25 +9,16 @@ module.exports = (app, cherwell, forms) => {
 		let service = req.params.service,
 		category = req.params.category,
 		subcategory = req.params.subcategory;
-
-		let result = cherwell.isSubcategory(subcategory);
-		//if it exists, search for the form
-		if(result.found) {
-			let form = forms.getForm({ service, category, subcategory });
-			//if a form exists, send it back
+		//get the form needed
+		cherwell.getForm({service, category, subcategory}, (err, form) => {
+			//if there's a form, send it
 			if(form) {
-				console.log('form found. sending to client');
-				console.log(form);
 				res.status(200).send(form);
 			} else {
-				//if not, send a generic form
-				console.log('form not found. sending 404 to client');
-				res.status(404).send(`request failed. Form not found for ${service} > ${category} > ${subcategory}`);
+				//if not, it's likely an error. send the status and message back
+				res.status(err.status).send(err.message);
 			}
-		} else {
-			console.log(`form requested, but the service ${service} doesn't exist`);
-			res.status(404).send(`request failed. Service "${service}" not found.`);
-		}	
+		});
 	});
 
 	/**********
@@ -49,6 +40,7 @@ module.exports = (app, cherwell, forms) => {
 				res.status(500).send(error);
 			});
 		} else { res.status(200).send(); }
+	
 	});
 
 	app.post('/submit/form', (req, res) => {
@@ -145,4 +137,12 @@ module.exports = (app, cherwell, forms) => {
 		});
 	});
 
+	app.get('/catalog/:type', (req, res) => {
+		if(req.params.type.toLowerCase() == "incident") {
+			res.status(200).send(cherwell.incidentCatalog);
+		}
+		else if(req.params.type.toLowerCase() == "hrcase") {
+			res.status(200).send(cherwell.hrCaseCatalog);
+		} else { req.status(500).send("this catalog type does not exist"); }
+	});
 }
