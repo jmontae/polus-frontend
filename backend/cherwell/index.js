@@ -36,11 +36,15 @@ module.exports = class Cherwell {
 			console.log('connection established; token received');
 			//get the incident service catalog
 			this.getIncidentCatalog().then( catalog => {
+				console.log('received Incident catalog');
 				this.incidentCatalog = catalog;
+				console.log(this.incidentCatalog);
 			}).catch( error => { console.log(error); });
 			//get the HRCase service
 			this.getHRCaseCatalog().then( obj => {
+				console.log('received HRCase catalog');
 				this.hrCaseCatalog = obj;
+				console.log(this.hrCaseCatalog);
 			}).catch( error => { console.log(error); });
 		}).catch( error =>  { console.log(error); });
 	}
@@ -363,6 +367,17 @@ module.exports = class Cherwell {
 						} 
 
 						queries += `<p><b>${query.text}</b><br />${query.value}</p>`;
+
+						if(query.subqueries != null) {
+
+							query.subqueries.forEach(subqry => {
+								if ( Array.isArray(subqry.value) ) {
+									subqry.value = subqry.value.toString().replace(/\,/g, ", ");
+								}
+
+								queries += `<p><b>${subqry.text}</b><br />${subqry.value}</p>`;
+							});
+						}
 					});
 					//once all of the queries have been processed, add the form string to the Description and the classifications
 					data.fields.push({ name: `${ data.type == "HRCase" ? 'CaseType' : 'Service' }`, value: data.service }, 
@@ -384,6 +399,8 @@ module.exports = class Cherwell {
 
 					resolve(data);
 				}
+
+
 			} catch(error) {
 				console.log('an error occured.');
 				console.log(error);
@@ -438,7 +455,6 @@ module.exports = class Cherwell {
 					//go through each object to add the layers
 					body['businessObjects'].forEach( subcat => {
 						//get the categorization
-						console.log(subcat);
 						let subcategory = subcat.busObPublicId,
 						category = subcat.fields.find( el => el.name == "Service"),
 						service = subcat.fields.find( el => el.name == "ServiceClassification");
@@ -448,7 +464,6 @@ module.exports = class Cherwell {
 						catalog.add(subcategory, category.value);
 					});
 					//when it's created, send it in the resolve method
-					console.log(catalog);
 					resolve(catalog);
 				}
 			});
@@ -517,7 +532,7 @@ module.exports = class Cherwell {
 						catalog.add(category.value, service.value);
 						catalog.add(subcategory, category.value);
 					});
-					console.log(catalog);
+
 					resolve(catalog);
 				}
 			});

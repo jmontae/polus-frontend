@@ -20,6 +20,10 @@ module.exports = {
 		{
 			'name': 'CallSource',
 			'value': 'Portal'
+		},
+		{
+			'name': "NetID",
+			'value': 'null'
 		}
 	],
 
@@ -41,6 +45,17 @@ module.exports = {
 		{
 			'type': 'text',
 			'text': 'What is the total amount spent on business purchases?'
+		},
+		{
+			'type': 'radio',
+			'text': 'one more question?',
+			'options': ['yes', 'no'],
+			'subqueries': [
+				{
+					'type': 'text',
+					'text': 'What is your name?'
+				}
+			]
 		}
 	]
 }

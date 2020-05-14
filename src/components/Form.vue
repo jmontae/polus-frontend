@@ -9,6 +9,8 @@
 		data: () => {
 			return {
 				form: {},
+				queries: {},
+				user: null,
 				is404: false,
 				success: false,
 				answered: 0,
@@ -42,26 +44,28 @@
 				})
 				.then((json) => {
 					this.form = json;
-					this.form.fields.push({ name: 'NetID', value: 'jxj174730' });
+					this.queries = this.form.queries;
 					document.title += ` | ${this.form.title}`;
 				});
 		},
 		methods: {
 			updateData(obj) {
+				//search for the query
 				this.form.queries.find( (qry) => { 
 					if (qry.text == obj.text) {
-						if(!obj.value.length) { this.answered--; }
-						if(!qry.value || !qry.value.length) { this.answered++; }
-						qry.value = obj.value;
-					} else if( qry.hasSubqueries ) {
-						query.subqueries.find( (subq) => {
-							if (subq.text == obj.text) {
-								if(!obj.value.length) { this.answered--; }
-								if(!qry.value || !subq.value.length) { this.answered++; }
-								subq.value = obj.value;
-							}
-						});
-					}
+							if(!obj.value.length) { this.answered--; }
+							if(!qry.value || !qry.value.length) { this.answered++; }
+							
+							qry.value = obj.value;
+							if(obj.subqueries) { qry.subqueries = obj.subqueries; }
+						}
+				});
+			},
+			updateUser(value) {
+				this.form.fields.forEach( field => {
+					if( field.name == "NetID" ) {
+						field.value = value;
+					} 
 				});
 			}
 		}
@@ -80,10 +84,13 @@
 			<div class='form'>
 				<h1>{{ form.title }}</h1>
 				<p>{{ form.details }}</p>
-				<QueryComponent v-for="(query, index) in form.queries" :key="index" :text="query.text" :type='query.type' :options="query.options" v-on:update="updateData" />
-				<div v-if="qry.hasSubqueries" class="subqueries">
-					<QueryComponent v-for="(subq, index) in query.subqueries" :key="index" :text="subq.text" :type='subq.type' :options="subq.options" v-on:update="updateData" />
+				<div class="query">
+					<h4 class="query_text">Please enter your NetID.</h4>
+					<div class="query_value">
+						<input type="text" v-model="user" v-on:keyup="updateUser(user)" placeholder="...">
+					</div>
 				</div>
+				<QueryComponent v-for="(query, index) in queries" :key="index" :text="query.text" :type='query.type' :options="query.options" :subqries="query.subqueries" v-on:update="updateData" />
 				<SubmitButton :form="form" :answered="answered" />
 			</div>
 		</div>

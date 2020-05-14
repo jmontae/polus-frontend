@@ -4,7 +4,8 @@
 		data() {
 			return {
 				success: false,
-				visible: false
+				visible: false,
+				totalQueries: null
 			}
 		},
 		props: ['form', 'answered'],
@@ -12,6 +13,11 @@
 			url: function() {
 				return `${this.$serverURL}/submit/form`;
 			}
+		},
+		mounted: function() {
+				//get the total number of queries
+				this.totalQueries = this.form.queries.length;
+
 		},
 		methods: {
 			submitForm() {

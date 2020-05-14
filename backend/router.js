@@ -49,35 +49,28 @@ module.exports = (app, cherwell, forms) => {
 		console.log('processing form...');
 
 		try {
-			//check for the subcategory
-			let result = cherwell.isSubcategory(data.subcategory);
-			//if found, process the formData
-			if(result.found) {
-				//parse the form data and generate the HTML
-				cherwell.processFormData(data).then((formData) => {
-					console.log('form processed');
-					console.log('creating business object...');
-					//create the object
-					cherwell.createObject(result.type, formData).then( (busobj) => {
-						console.log('object created');
-						console.log('submitting to cherwell...');
-						//submit the object to Cherwell
-						cherwell.submitObject(busobj).then( (response) => {
-							console.log('object submitted successfully');
-							console.log(response);
-							res.status(200).send(response);
-						})
-						.catch(error => { console.log(error); res.status(500).send(error); })
+			//parse the form data and generate the HTML
+			cherwell.processFormData(data).then((formData) => {
+				console.log('form processed');
+				console.log('creating business object...');
+				//create the object
+				cherwell.createObject(data.type, formData).then( (busobj) => {
+					console.log('object created');
+					console.log('submitting to cherwell...');
+					//submit the object to Cherwell
+					cherwell.submitObject(busobj).then( (response) => {
+						console.log('object submitted successfully');
+						console.log(response);
+						res.status(200).send(response);
 					})
-					.catch(error => { console.log(error); res.status(500).send(error); });
+					.catch(error => { console.log(error); res.status(500).send(error); })
 				})
-				.catch( error => { console.log(error); res.status(500).send(error); });
-			} else {
-				//if not found, this shouldn't exist. send back a 500
-				res.status(500).send("there was an error: this form shouldn't exist.");
-			}
+				.catch(error => { console.log(error); res.status(500).send(error); });
+			})
+			.catch( error => { console.log(error); res.status(500).send(error); });
 		} catch(error) {
 			console.log('an error occured.');
+			console.log(error);
 			res.status(500).send(error);
 		}
 	});
