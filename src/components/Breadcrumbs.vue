@@ -2,7 +2,7 @@
 
 export default {
 	name: 'Breadcrumbs',
-	props: ['root', 'service', 'category', 'subcategory'],
+	props: ['root', 'type', 'service', 'category', 'subcategory'],
 	computed: {
 		hasService: function() {
 			let check = this.service.length > 0 ? true : false;
@@ -20,10 +20,10 @@ export default {
 			return this.root;
 		},
 		serviceLink: function() {
-			return `${this.root}/${this.service}`
+			return `${this.root}/${this.type}/${this.service}`
 		},
 		categoryLink: function() {
-			return `${this.root}/${this.service}/${this.category}`
+			return `${this.root}/${this.type}/${this.service}/${this.category}`
 		},
 		subcategoryLink: function() {
 			return `${this.root}/${this.service}/${this.category}/${this.subcategory}`

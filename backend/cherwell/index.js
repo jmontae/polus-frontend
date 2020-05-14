@@ -39,9 +39,9 @@ module.exports = class Cherwell {
 				this.incidentCatalog = catalog;
 			}).catch( error => { console.log(error); });
 			//get the HRCase service
-			// this.getHRCaseCatalog().then( obj => {
-			// 	this.hrCaseCatalog = obj;
-			// }).catch( error => { console.log(error); });
+			this.getHRCaseCatalog().then( obj => {
+				this.hrCaseCatalog = obj;
+			}).catch( error => { console.log(error); });
 		}).catch( error =>  { console.log(error); });
 	}
 
@@ -434,7 +434,7 @@ module.exports = class Cherwell {
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
 				} else {
 					//if it is, create the catalog
-					let catalog = new Tree('Incident');
+					let catalog = new Tree( new TreeNode('Incident') );
 					//go through each object to add the layers
 					body['businessObjects'].forEach( subcat => {
 						//get the categorization
@@ -442,13 +442,10 @@ module.exports = class Cherwell {
 						let subcategory = subcat.busObPublicId,
 						category = subcat.fields.find( el => el.name == "Service"),
 						service = subcat.fields.find( el => el.name == "ServiceClassification");
-						
-						console.log('category: ', category);
-						console.log('service: ', service);
 
-						catalog._addNode(service, 'Incident');
-						catalog._addNode(category, service);
-						catalog._addNode(subcat, category);
+						catalog.add(service.value, 'Incident');
+						catalog.add(category.value, service.value);
+						catalog.add(subcategory, category.value);
 					});
 					//when it's created, send it in the resolve method
 					console.log(catalog);
@@ -507,7 +504,7 @@ module.exports = class Cherwell {
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
 				} else {
 					//if it is, create the catalog
-					let catalog = new Tree('HRCase');
+					let catalog = new Tree( new TreeNode('HRCase') );
 					//go through each object to add the layers
 					body['businessObjects'].forEach( subcat => {
 						//get the categorization
@@ -516,12 +513,11 @@ module.exports = class Cherwell {
 						category = subcat.fields.find( el => el.name == "Category"),
 						service = subcat.fields.find( el => el.name == "CaseType");
 						
-						catalog._addNode(service, 'HRCase');
-						catalog._addNode(category, service);
-						catalog._addNode(subcat, category);
-
-						console.log(catalog);
+						catalog.add(service.value, 'HRCase');
+						catalog.add(category.value, service.value);
+						catalog.add(subcategory, category.value);
 					});
+					console.log(catalog);
 					resolve(catalog);
 				}
 			});

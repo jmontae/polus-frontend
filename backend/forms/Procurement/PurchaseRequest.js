@@ -27,8 +27,15 @@ module.exports = {
 		},
 		{
 			'type': 'radio',
-			'text': 'What would you like to purchase?',
-			'options': ['office supplies', 'software', 'hardware']
+			'text': 'Would you like to give your name?',
+			'options': ['yes', 'no'],
+			'hasSubqueries': true,
+			'subqueries': [
+				{
+					'type': 'text',
+					'text': 'What is your name?'
+				}
+			]
 
 		}
 	]

@@ -13,7 +13,7 @@ class Tree {
 	_traverse(callback) {
 		const self = this;
 
-		goThrough = (node) => {
+		let goThrough = (node) => {
 			if( !callback(node) ) {
 				node.children.forEach( child => {
 					goThrough(child);
@@ -24,16 +24,13 @@ class Tree {
 		goThrough(self._root);
 	}
 
-	  _addNode(value, parentValue) {
-    
-    if (this._root === null) {
-      this._root = new TreeNode();
-      return;
-    }
-
+	add(value, parentValue) {
     this._traverse((node) => {
       if (node.value === parentValue) {
-        node.children.push( new TreeNode() );
+      	let child = node.children.find( el => el.value == value )
+        if( !child ) {
+        	node.children.push( new TreeNode(value) );
+      	}
       }
     });
   }
@@ -48,8 +45,13 @@ class Tree {
     })
   }
 
+  get(value) {
+  	console.log(this._search(value));
+  	return this._search(value);
+  }
+
   _search(value) {
-    let returnNode = 'Not Found';
+    let returnNode = false;
     this._traverse((node) => {
       if (node.value === value) {
         returnNode = node;

@@ -140,9 +140,11 @@ module.exports = (app, cherwell, forms) => {
 	app.get('/catalog/:type', (req, res) => {
 		if(req.params.type.toLowerCase() == "incident") {
 			res.status(200).send(cherwell.incidentCatalog);
+			console.log("incident catalog sent");
 		}
 		else if(req.params.type.toLowerCase() == "hrcase") {
 			res.status(200).send(cherwell.hrCaseCatalog);
-		} else { req.status(500).send("this catalog type does not exist"); }
+			console.log("HR Case catalog sent");
+		} else { res.status(500).send("this catalog type does not exist"); }
 	});
 }

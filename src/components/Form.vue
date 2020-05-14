@@ -53,6 +53,14 @@
 						if(!obj.value.length) { this.answered--; }
 						if(!qry.value || !qry.value.length) { this.answered++; }
 						qry.value = obj.value;
+					} else if( qry.hasSubqueries ) {
+						query.subqueries.find( (subq) => {
+							if (subq.text == obj.text) {
+								if(!obj.value.length) { this.answered--; }
+								if(!qry.value || !subq.value.length) { this.answered++; }
+								subq.value = obj.value;
+							}
+						});
 					}
 				});
 			}
@@ -61,18 +69,21 @@
 </script>
 
 <template>
-	<div class="form_page">
+	<div class="page">
 		<div class="404" v-if="is404">
 			<h1>404</h1>
 			<h2>We're sorry for the inconvience, but this page doesn't exist.</h2>
 			<p>if you're looking for help, please visit <a href="https://atecio.utdallas.edu/help">atecio.utdallas.edu/help</a>.</p>
 		</div>
 		<div v-else>
-			<Breadcrumbs :root="this.$baseURL" :service="service" :category="category" :subcategory="subcategory" />
+			<Breadcrumbs :root="this.$baseURL" :type="form.type" :service="service" :category="category" :subcategory="subcategory" />
 			<div class='form'>
 				<h1>{{ form.title }}</h1>
 				<p>{{ form.details }}</p>
 				<QueryComponent v-for="(query, index) in form.queries" :key="index" :text="query.text" :type='query.type' :options="query.options" v-on:update="updateData" />
+				<div v-if="qry.hasSubqueries" class="subqueries">
+					<QueryComponent v-for="(subq, index) in query.subqueries" :key="index" :text="subq.text" :type='subq.type' :options="subq.options" v-on:update="updateData" />
+				</div>
 				<SubmitButton :form="form" :answered="answered" />
 			</div>
 		</div>
@@ -80,7 +91,7 @@
 </template>
 
 <style>
-.form_page {
+.page {
 	display: block;
 	margin: 0 auto;
 	margin-bottom: 80px;
