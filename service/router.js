@@ -1,4 +1,34 @@
+const fs = require('fs'),
+passport = require('passport'),
+ldap = require('passport-ldapauth'),
+ldap_admin = process.env.LDAP_ADMIN,
+ldap_password = process.env.LDAP_PASSWORD
+
+options = {
+	server: {
+		url: 'ldap://campus.ad.utdallas.edu',
+		bindDN: `cn={{username}},ou=people,dc=campus,dc=ad,dc=utdallas,dc=edu`,
+		bindCredentials: `{{password}}`,
+		searchBase: `ou=people,dc=campus,dc=ad,dc=utdallas,dc=edu`,
+		searchFilter: `(user={{username}})` //,
+		// tlsOptions: {
+		// 	ca: [
+		// 		fs.readFileSync('')
+		// 	]
+		// }
+	}
+}
+
+passport.use(new ldap( options ))
+
+
 module.exports = (app, cherwell, forms) => {
+
+	app.post('/auth', /*passport.authenticate('ldapauth', {session: false}),*/ (req, res) => {
+		// console.log('request: ', req)
+		// console.log('response: ', res)
+		res.status(200).end()
+	})
 
 	/*********
 	* get /form/:service/:category/:subcategory
@@ -27,12 +57,12 @@ module.exports = (app, cherwell, forms) => {
 	**********/
 	app.get('/new_session', (req, res) => {
 		//check if there's an access_token available at all, or if it's expired
-		console.log('new session started');
+		console.log('service/router.js[GET /new_session]: new session started');
 		if( cherwell.access_token == "" ) {
 			//if there isn't one or it's expired, get a new one
 			cherwell.requestToken().then( () => {
 				//send back a 200 status if successful
-				console.log("access token receieved.");
+				console.log('service/router.js[GET /new_session]: access token received.');
 				res.status(200).send();
 			}).catch( error => { 
 				//send a 500 status if not, with the error
@@ -45,21 +75,18 @@ module.exports = (app, cherwell, forms) => {
 
 	app.post('/submit/form', (req, res) => {
 		let data = req.body;
-		console.log('form submission received');
-		console.log('processing form...');
+		console.log('service/router.js[POST /submit/form]: form submission received. processing form...')
 
 		try {
 			//parse the form data and generate the HTML
 			cherwell.processFormData(data).then((formData) => {
-				console.log('form processed');
-				console.log('creating business object...');
+				console.log('service/router.js[POST /submit/form]: form processed. creating business object...')
 				//create the object
 				cherwell.createObject(data.type, formData).then( (busobj) => {
-					console.log('object created');
-					console.log('submitting to cherwell...');
+					console.log('service/router.js[POST /submit/form]: object created. submitting to cherwell...')
 					//submit the object to Cherwell
 					cherwell.submitObject(busobj).then( (response) => {
-						console.log('object submitted successfully');
+						console.log('service/router.js[POST /submit/form]: object submitted successfully');
 						console.log(response);
 						res.status(200).send(response);
 					})
@@ -69,7 +96,7 @@ module.exports = (app, cherwell, forms) => {
 			})
 			.catch( error => { console.log(error); res.status(500).send(error); });
 		} catch(error) {
-			console.log('an error occured.');
+			console.log('service/router.js[POST /submit/form]: an error occured.');
 			console.log(error);
 			res.status(500).send(error);
 		}
@@ -81,7 +108,7 @@ module.exports = (app, cherwell, forms) => {
 	* with the data
 	**********/
 	app.post('/submit/:object_name', (req, res) => {
-		console.log("submit request received.");
+		console.log("service/router.js[POST /submit/object_name]: submit request received.");
 		let obj = req.body;
 		console.log(obj);
 		console.log(req.params);
@@ -93,7 +120,7 @@ module.exports = (app, cherwell, forms) => {
 				//submit the object to Cherwell
 				cherwell.submitObject(busobj).then( (response) => {
 					//if it's successful, send a 200 status with the response
-					console.log('object submitted successfully');
+					console.log('service/router.js[POST /submit/object_name]: object submitted successfully');
 					res.status(200).send(response);
 				}).catch( error => {
 					//if not, send back a 500 status with the error
@@ -133,11 +160,11 @@ module.exports = (app, cherwell, forms) => {
 	app.get('/catalog/:type', (req, res) => {
 		if(req.params.type.toLowerCase() == "incident") {
 			res.status(200).send(cherwell.incidentCatalog);
-			console.log("incident catalog sent");
+			console.log("service/router.js[GET /catalog/type]: incident catalog sent");
 		}
 		else if(req.params.type.toLowerCase() == "hrcase") {
 			res.status(200).send(cherwell.hrCaseCatalog);
-			console.log("HR Case catalog sent");
+			console.log("service/router.js[GET /catalog/type]: HR Case catalog sent");
 		} else { res.status(500).send("this catalog type does not exist"); }
 	});
 }

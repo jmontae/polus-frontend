@@ -6,7 +6,7 @@ const handler = {
 		let name = obj.name.toLowerCase();
 		if(name.includes('default')) {
 			this.forms.defaults.push(obj);
-			console.log(`>>> added new form to defaults: ${obj.name}`);
+			console.log(`>>> form added to defaults: ${obj.name}`);
 
 		} else {
 			let service = obj.service,
@@ -19,7 +19,7 @@ const handler = {
 			}
 
 			this.forms[service].push(obj);
-			console.log(`>>> added new form to ${service}: ${obj.name} (${category} > ${subcategory})`);
+			console.log(`>>> form added to ${service}: ${obj.name} (${category} > ${subcategory})`);
 		}
 
 		return this;

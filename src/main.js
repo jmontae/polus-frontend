@@ -24,7 +24,7 @@ new Vue({
 	router,
 	beforeCreate: function() {
 		//get the incident catalog
-		fetch(`http://localhost:4000/catalog/incident`).then((response) => {
+		fetch(`${this.$serverURL}/catalog/incident`).then((response) => {
 				if( response.status == 200 ) {
 					return response.json();
 				}
@@ -32,7 +32,7 @@ new Vue({
 			this.$incidentCatalog = json;
 		});
 		//and the HRCase catalog
-		fetch(`http://localhost:4000/catalog/HRCase`).then((response) => {
+		fetch(`${this.$serverURL}/catalog/HRCase`).then((response) => {
 				if( response.status == 200 ) {
 					return response.json();
 				}

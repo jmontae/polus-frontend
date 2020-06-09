@@ -1,9 +1,11 @@
 require('dotenv').config();
-let Cherwell = require('./cherwell'),
+let Cherwell = require('./util/cherwell'),
 		port = process.env.SERVER_PORT,
-		body_parser = require('body-parser'),
-		github_user = process.env.GITHUB_USER,
-		cors = require('cors');
+		github_user = process.env.GITHUB_USER;
+
+let body_parser = require('body-parser'),
+	cors = require('cors')
+
 
 const app = require('express')();
 app.use(body_parser.json());
@@ -18,7 +20,7 @@ const cherwell = new Cherwell({
 });
 
 app.listen(port, () => {
-	console.log(`server listening on port ${port}`);
+	console.log(`service/index.js: server listening on port ${port}`);
 });
 
 require('./router')(app, cherwell);

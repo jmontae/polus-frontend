@@ -3,8 +3,12 @@
 		name: "SubmitButton",
 		data() {
 			return {
-				success: false,
+				submit_success: false,
+				auth_fail: false,
 				visible: false,
+				auth: false,
+				username: null,
+				password: null,
 				totalQueries: null
 			}
 		},
@@ -20,26 +24,50 @@
 
 		},
 		methods: {
-			submitForm() {
-				let completion_text = document.getElementById("completion");
-				completion_text.innerHTML = "sending, please wait...";
-
+			submit() {
 				fetch(this.url, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
-				.then((response) => {
+					.then((response) => {
+						this.auth = false
+						//set the user's NetID in the form object
+						let netid = this.form.fields.find(el => el.name == "NetID")
+						netid.value = this.username
+
+						if(response.status == 200) {
+							this.submit_success = true, this.auth = false
+							console.log(response);
+						} else {
+							this.submit_success = false, this.auth = false
+							console.log(response);
+						}
+					})
+			},
+			authenticate() {
+				fetch(`${this.$serverURL}/auth`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify( { username: this.username, password: this.password }) })
+				.then( response => {
+
 					if(response.status == 200) {
-						this.success = true;
-						this.visible = true;
-						console.log(response);
-					} else {
-						this.success = false;
-						this.visible = true;
-						console.log(response);
+						//submit the form
+						let auth_details = document.getElementById('auth_details')
+						auth_details.innerHTML = '<h4 style="color: green">Sending form...</h4>'
+						this.submit()
+					} else { 
+						this.auth_fail = true
+						let auth_details = document.getElementById('auth_details')
+						auth_details.innerHTML = `<h4 style="color: red">Couldn't authenticate. Please try again.</h4>`
+
+						console.log(response)
 					}
-				}).catch();
+				})
+
+			},
+			finish() {
+				let completion_text = document.getElementById("completion");
+				completion_text.innerHTML = "please wait...";
+				this.visible = true, this.auth = true
 			},
 			close() {
 				this.visible = false;
-				location.reload();
+				if( this.submit_success ) { location.reload() }
 			}
 		}
 	}
@@ -47,13 +75,27 @@
 	
 <template>
 	<div class="submit">
-		<button class="submit_button" type="button" @click="submitForm">Submit</button>
+		<button class="submit_button" type="button" @click="finish">Finish</button>
 		<div id="completion" class="completion">{{ answered }}/{{ form.queries.length }} answered</div>
 		<div class="success-fail" v-if="visible">
 			<div class="success-fail_message">
-				<p v-if='success'>Your request has been submitted successfully.</p>
-				<p v-else>Your request was not submitted. Please try again. If if happens again, let us know at atec_tech@utdallas.edu.</p> 
-				<div class="success_button"><button type="button" @click="close">OK</button></div>
+				<div id="auth" class="auth" v-if='auth'>
+					<h3>Please enter your NetID and password</h3>
+					<p id="auth_details"></p>
+					<h4 class="query_text">NetID</h4>
+					<input type="text" v-model="username" placeholder="...">
+					<h4 class="query_text">Password</h4>
+					<input type="password" v-model="password" placeholder="...">
+					<div id="auth_button" class="auth_button"><button type="button" @click="authenticate">LOG IN</button></div>
+				</div>
+				<div id="success" v-else-if="submit_success">
+					<p id='success'>Your request has been submitted successfully.</p>
+					<div class="success_button"><button type="button" @click="close">OK</button></div>
+				</div>
+				<div id="fail" v-else>
+					<p>Your request was not submitted. Please try again. If it happens again, let us know at atec_tech@utdallas.edu.</p> 
+					<div class="success_button"><button type="button" @click="close">OK</button></div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -85,7 +127,7 @@
 	}
 
 	.success-fail_message {
-		width: 300px;
+		width: 500px;
 		min-height: 150px;
 
 		background-color: #ddd;
@@ -116,6 +158,10 @@
 		text-decoration: none;
 		border: none;
 
+	}
+
+	.auth_button, .success_button {
+		padding: 15px 0;
 	}
 
 	.completion {

@@ -2,12 +2,16 @@ let request = require('request'),
 glob = require('glob'),
 path = require('path');
 const formHandler = require('../forms');
-let { TreeNode, Tree } = require('../util/tree.js');
+let { TreeNode, Tree } = require('./tree.js');
 
 module.exports = class Cherwell {
 	access_token = '';
-	refresh_token = '';
-	expires_in = '';	
+	refresh = {
+		token: '',
+		expires_in: '',
+		fresh: true,
+		error: ''
+	};	
 	#user = "";
 	#password = "";
 	#client_id = "";
@@ -27,26 +31,21 @@ module.exports = class Cherwell {
 		this.base_url = params.base_url;
 		this.tenant = params.tenant;
 		//load the forms
-		glob.sync('./backend/forms/*/*.js').forEach((file) => {
+		glob.sync('./service/forms/*/*.js').forEach((file) => {
 			let form = require( path.resolve(file) );
 			formHandler.add(form);
 		});
 		//request a token
 		this.requestToken().then( () => {
-			console.log('connection established; token received');
-			//get the incident service catalog
-			this.getIncidentCatalog().then( catalog => {
-				console.log('received Incident catalog');
-				this.incidentCatalog = catalog;
-				console.log(this.incidentCatalog);
-			}).catch( error => { console.log(error); });
-			//get the HRCase service
-			this.getHRCaseCatalog().then( obj => {
-				console.log('received HRCase catalog');
-				this.hrCaseCatalog = obj;
-				console.log(this.hrCaseCatalog);
-			}).catch( error => { console.log(error); });
-		}).catch( error =>  { console.log(error); });
+		 	//get the incident service catalog
+		 	this.getIncidentCatalog().then( catalog => {
+		 		this.incidentCatalog = catalog;
+		 	}).catch( error => { console.log(error); });
+		 	//get the HRCase service
+		 	this.getHRCaseCatalog().then( obj => {
+		 		this.hrCaseCatalog = obj;
+		 	}).catch( error => { console.log(error); });
+		 }).catch( error =>  { console.log(error); });
 	}
 
 	/*********
@@ -78,14 +77,21 @@ module.exports = class Cherwell {
 				body = JSON.parse(body);
 				//if it's successful, set the acces_token and resolve
 				if(res.statusCode == 200) {
-					this.access_token = body.access_token;
-					this.refresh_token = body.refresh_token;
-					this.expires_in = body.expires_in;
+					console.log()
+					this.access_token = body.access_token,
+					this.refresh.token = body.refresh_token,
+					this.refresh.expires_in = (body.expires_in * 1000),
+					this.refresh.fresh = true;
+
+					this.refresh.timer = setTimeout(this.refreshToken, this.refresh.expires_in);
+					console.log('backend/cherwell/index.js[requestToken]: connection estabished; token received.');
 					resolve();
 				}
 				//if not, reject with the error that was sent
 				else {
-					console.log(res);
+					console.log('backend/cherwell/index.js[requestToken]: there was an error.');
+					console.log(`response: ${res}`);
+					console.log(`body: ${body}`);
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: body.errorMessage });
 				}
 			});
@@ -93,21 +99,52 @@ module.exports = class Cherwell {
 	}
 
 	/*********
-	checkToken
-	checks for a token and if the access token has expired
+	tokenRefresh
+	after a token is requested, this is run to start a refresh timer
+
+	params
+		expiry: the time until the token expires, in seconds. this is given when a token is requested
 	**********/
-	async checkToken() {
-		return new Promise( (resolve, reject) => {
-			//check for a token or if it's expired
-			if(this.access_token == "" /*|| expired*/) {
-				//if it is, request a new one
-				this.requestToken().then( () => {
-					resolve();
-				}).catch( error => {
-					reject(error);
-				});
-			} else { resolve(); }
-		});
+	refreshToken() {
+		//creat the object for the request
+	 let options = {
+	 	url: `${this.base_url}/CherwellAPI/token`,
+		method: 'POST',
+		headers: {
+			'api-key': this.client_id,
+			'Content-Type': 'x-www-form-urlencoded'
+		},
+		auth: {
+			bearer: this.access_token 
+		},
+		form: {
+			grant_type: 'refresh_token',
+			client_id: this.client_id,
+			refresh_token: this.refresh.token
+		}
+	 };
+	 //make the request
+	 console.log('backend/cherwell/index.js[refreshToken]: requesting token refresh...');
+	 request(options, (err, res, body) => {
+	 	console.log(body);
+	 	body = JSON.parse(body);
+	 	if(res.statusCode == 200) {
+	 		//get the data from the body
+	 		this.access_token = body.access_token,
+	 		this.refresh.token = body.refresh_token,
+	 		this.refresh.expires_in = (body.expires_in * 1000),
+	 		//set fresh to true
+	 		this.refresh.fresh = true;
+	 		//restart the timer with the new expires_in value
+	 		this.refresh.timer = setTimeout(this.refreshToken, this.refresh.expires_in);
+	 		console.log('backend/cherwell/index.js[refreshToken]: token refresh successful.');
+
+	 	} else {
+	 		this.refresh.fresh = false;
+	 		this.refresh.error = err;
+	 		console.log('backend/cherwell/index.js[refreshToken]: there was an error with refresh request.\n', err);
+	 	}
+	 });
 	}
 
 	/*********
@@ -442,14 +479,20 @@ module.exports = class Cherwell {
 				  "includeSchema": false
 				}
 			};
+			
 			//make the request to Cherwell
+			console.log('backend/cherwell/index.js[getIncidentCatalog]: requesting Incident catalog...');
 			request(options, (err, res, body) => {
 				body = JSON.parse(body);
 				//if the status isn't 200, reject it
 				if (res.statusCode != 200 ) {
 					let msg = body.Message ? body.Message : body.errorMessage;
+					console.log('backend/cherwell/index.js[getIncidentCatalog]: there was an error.');
+					console.log('error: ', err);
+					console.log('body: ', body);
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
 				} else {
+					console.log('backend/cherwell/index.js[getIncidentCatalog]: catalog received');
 					//if it is, create the catalog
 					let catalog = new Tree( new TreeNode('Incident') );
 					//go through each object to add the layers
@@ -464,6 +507,7 @@ module.exports = class Cherwell {
 						catalog.add(subcategory, category.value);
 					});
 					//when it's created, send it in the resolve method
+					console.log(catalog);
 					resolve(catalog);
 				}
 			});
@@ -516,8 +560,13 @@ module.exports = class Cherwell {
 				//if the status isn't 200, reject it
 				if (res.statusCode != 200 ) {
 					let msg = body.Message ? body.Message : body.errorMessage;
+					console.log('backend/cherwell/index.js[getHRCaseCatalog]: there was an error.');
+					console.log('error: ', err);
+					console.log('body: ', body);
+
 					reject({ status: res.statusCode, errorCode: body.errorCode, message: msg });
 				} else {
+					console.log('backend/cherwell/index.js[getIncidentCatalog]: requesting HRCase catalog...');
 					//if it is, create the catalog
 					let catalog = new Tree( new TreeNode('HRCase') );
 					//go through each object to add the layers
@@ -533,6 +582,7 @@ module.exports = class Cherwell {
 						catalog.add(subcategory, category.value);
 					});
 
+					console.log(catalog);
 					resolve(catalog);
 				}
 			});
@@ -562,4 +612,25 @@ module.exports = class Cherwell {
 		//return the found value
 		return { found, type, team };
 	}
+
+	// async attachFileToObject(name, obj) {
+	// 		let options = {
+	// 			url: `${this.base_url}/CherwellAPI/api/V1/uploadbusinessobjectattachment/filename/${obj.filename}/busobname/${obj.type}/publicid/${obj.publicid}/offset/0/totalsize/${obj.filesize}`,
+	// 			method: 'POST',
+	// 			headers: {
+	// 				'Content-Type': 'application/octet-stream'
+	// 			},
+	// 			auth: {
+	// 				bearer: this.access_token
+	// 			},
+	// 			form: {
+ //  				"filename": `${obj.filename}`, 
+ //  				"busobname": `${obj.type}`,
+	// 			"publicid": `${obj.publicid}`,
+	// 			"offset": 0,
+	// 			"totalsize": ''
+	// 			}
+	// 		};
+
+	// }
 }

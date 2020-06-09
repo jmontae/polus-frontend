@@ -1,12 +1,11 @@
 module.exports = {
-	'name': 'BusinessExpenseReimbursement',
+	'name': 'BusinessExpense',
 	'type': 'HRCase',
-	'title': "Business Expense Reimbursement",
-	'details': "Use this form for submitting a reimbursement request for business expenses. Please answer all questions before clicking submit.",
+	'title': 'Business Expense Reimbursement Form',
+	'details': "Use this form for submitting a purchasing request. Please answer all questions before clicking submit.",
 	'service': 'Procurement',
 	'category': 'Reimbursements',
 	'subcategory': 'Business Expense Reimbursement',
-	'tenant': 'ATEC',
 
 	'fields': [
 		{
@@ -33,22 +32,8 @@ module.exports = {
 			'text': 'What is your name?'
 		},
 		{
-			'type': 'checkbox',
-			'text': 'Would you like to submit a reimbursement?',
-			'options': ["yes", "no", "i don't know"]
-
-		},
-		{
-			'type': 'textarea',
-			'text': 'give an explanation of your expenses.'
-		},
-		{
-			'type': 'text',
-			'text': 'What is the total amount spent on business purchases?'
-		},
-		{
 			'type': 'radio',
-			'text': 'one more question?',
+			'text': 'Would you like to give your name?',
 			'options': ['yes', 'no'],
 			'subqueries': [
 				{
@@ -56,6 +41,7 @@ module.exports = {
 					'text': 'What is your name?'
 				}
 			]
+
 		}
 	]
 }

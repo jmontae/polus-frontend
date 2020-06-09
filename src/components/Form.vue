@@ -10,7 +10,6 @@
 			return {
 				form: {},
 				queries: {},
-				user: null,
 				is404: false,
 				success: false,
 				answered: 0,
@@ -21,7 +20,7 @@
 		},
 		components: { QueryComponent, SubmitButton, Breadcrumbs },
 		created: function() {
-			fetch('http://localhost:4000/new_session').then( () => {
+			fetch(`${this.$serverURL}/new_session`).then( () => {
 				console.log('new session available');
 				this.ready = true;
 			});
@@ -30,7 +29,7 @@
 			this.category = this.$route.params.category,
 			this.subcategory = this.$route.params.subcategory;
 
-			let uri = encodeURI(`http://localhost:4000/form/${this.service}/${this.category}/${this.subcategory}`);
+			let uri = encodeURI(`${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`);
 			//fetch the form queries from the backend
 			fetch(uri)
 				.then((response) => {
@@ -60,13 +59,6 @@
 							if(obj.subqueries) { qry.subqueries = obj.subqueries; }
 						}
 				});
-			},
-			updateUser(value) {
-				this.form.fields.forEach( field => {
-					if( field.name == "NetID" ) {
-						field.value = value;
-					} 
-				});
 			}
 		}
 	}
@@ -84,12 +76,6 @@
 			<div class='form'>
 				<h1>{{ form.title }}</h1>
 				<p>{{ form.details }}</p>
-				<div class="query">
-					<h4 class="query_text">Please enter your NetID.</h4>
-					<div class="query_value">
-						<input type="text" v-model="user" v-on:keyup="updateUser(user)" placeholder="...">
-					</div>
-				</div>
 				<QueryComponent v-for="(query, index) in queries" :key="index" :text="query.text" :type='query.type' :options="query.options" :subqries="query.subqueries" v-on:update="updateData" />
 				<SubmitButton :form="form" :answered="answered" />
 			</div>

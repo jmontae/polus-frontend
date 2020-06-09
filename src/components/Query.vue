@@ -3,7 +3,7 @@ export default {
 	name: "QueryComponent",
 	props: ['text', 'options', 'type', 'subqries'],
 	data() {
-		return { value: null, subqueries: {} }
+		return { value: null, subqueries: [] }
 	},
 	//check the type for the query's input type
 	computed: {
@@ -17,8 +17,14 @@ export default {
 			return this.type == "textarea";
 		},
 		toggle: function() {
+			let choice = (this.value != null) ? this.value.toLowerCase() : this.value
+			if(choice == "no") { 
+				this.subqueries.forEach( sqry => {
+					delete sqry.value;
+				});
+			}
 			if(this.type == 'radio' && this.subqueries ) {
-				return (this.value == "yes") ? true : false;
+				return (choice == "yes") ? true : false;
 			}
 			return false;
 		}
@@ -97,7 +103,7 @@ export default {
 	margin-bottom: 20px;
 }
 
-input[type=text] {
+input[type=text], input[type=password] {
 	font-size: 1rem;
 	width: 300px;
 	padding: 10px 5px;
