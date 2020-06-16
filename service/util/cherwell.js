@@ -81,9 +81,9 @@ module.exports = class Cherwell {
 					this.access_token = body.access_token,
 					this.refresh.token = body.refresh_token,
 					this.refresh.expires_in = (body.expires_in * 1000),
-					this.refresh.fresh = true;
+					
+					this.refreshtimer(this.refresh.expires_in);
 
-					this.refresh.timer = setTimeout(this.refreshToken, this.refresh.expires_in);
 					console.log('backend/cherwell/index.js[requestToken]: connection estabished; token received.');
 					resolve();
 				}
@@ -98,6 +98,23 @@ module.exports = class Cherwell {
 		});
 	}
 
+	refreshtimer(expiry) {
+		let time = 0
+		while( time <= expiry ) {
+			if( time > expiry ) {
+				this.refreshToken().then( () => {
+					this.refreshtimer(this.refresh.expires_in);
+				}).catch( err => {
+					console.log("error with the refresh: ", err);
+					this.refreshtimer(5)
+				})
+			} else {
+				time++
+			}	
+		}
+	}
+
+
 	/*********
 	tokenRefresh
 	after a token is requested, this is run to start a refresh timer
@@ -105,46 +122,48 @@ module.exports = class Cherwell {
 	params
 		expiry: the time until the token expires, in seconds. this is given when a token is requested
 	**********/
-	refreshToken() {
-		//creat the object for the request
-	 let options = {
-	 	url: `${this.base_url}/CherwellAPI/token`,
-		method: 'POST',
-		headers: {
-			'api-key': this.client_id,
-			'Content-Type': 'x-www-form-urlencoded'
-		},
-		auth: {
-			bearer: this.access_token 
-		},
-		form: {
-			grant_type: 'refresh_token',
-			client_id: this.client_id,
-			refresh_token: this.refresh.token
-		}
-	 };
-	 //make the request
-	 console.log('backend/cherwell/index.js[refreshToken]: requesting token refresh...');
-	 request(options, (err, res, body) => {
-	 	console.log(body);
-	 	body = JSON.parse(body);
-	 	if(res.statusCode == 200) {
-	 		//get the data from the body
-	 		this.access_token = body.access_token,
-	 		this.refresh.token = body.refresh_token,
-	 		this.refresh.expires_in = (body.expires_in * 1000),
-	 		//set fresh to true
-	 		this.refresh.fresh = true;
-	 		//restart the timer with the new expires_in value
-	 		this.refresh.timer = setTimeout(this.refreshToken, this.refresh.expires_in);
-	 		console.log('backend/cherwell/index.js[refreshToken]: token refresh successful.');
+	async refreshToken() {
+		return new Promise( (resolve, reject) => {
+			//creat the object for the request
+		 let options = {
+		 	url: `${this.base_url}/CherwellAPI/token`,
+			method: 'POST',
+			headers: {
+				'api-key': this.client_id,
+				'Content-Type': 'x-www-form-urlencoded'
+			},
+			auth: {
+				bearer: this.access_token 
+			},
+			form: {
+				grant_type: 'refresh_token',
+				client_id: this.client_id,
+				refresh_token: this.refresh.token
+			}
+		 };
+		 //make the request
+		 console.log('backend/cherwell/index.js[refreshToken]: requesting token refresh...');
+		 request(options, (err, res, body) => {
+		 	console.log(body);
+		 	body = JSON.parse(body);
+		 	if(res.statusCode == 200) {
+		 		//get the data from the body
+		 		this.access_token = body.access_token,
+		 		this.refresh.token = body.refresh_token,
+		 		this.refresh.expires_in = (body.expires_in * 1000),
+		 		//set fresh to true
+		 		this.refresh.fresh = true;
+		 		//restart the timer with the new expires_in value
+		 		console.log('backend/cherwell/index.js[refreshToken]: token refresh successful.');
+		 		resolve();
 
-	 	} else {
-	 		this.refresh.fresh = false;
-	 		this.refresh.error = err;
-	 		console.log('backend/cherwell/index.js[refreshToken]: there was an error with refresh request.\n', err);
-	 	}
-	 });
+		 	} else {
+		 		this.refresh.fresh = false;
+		 		this.refresh.error = err;
+		 		reject(this.refresh.error);
+		 	}
+		 });
+		})
 	}
 
 	/*********

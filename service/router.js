@@ -1,25 +1,25 @@
-const fs = require('fs'),
-passport = require('passport'),
-ldap = require('passport-ldapauth'),
-ldap_admin = process.env.LDAP_ADMIN,
-ldap_password = process.env.LDAP_PASSWORD
+const fs = require('fs')
+// passport = require('passport'),
+// ldap = require('passport-ldapauth'),
+// ldap_admin = process.env.LDAP_ADMIN,
+// ldap_password = process.env.LDAP_PASSWORD
 
-options = {
-	server: {
-		url: 'ldap://campus.ad.utdallas.edu',
-		bindDN: `cn={{username}},ou=people,dc=campus,dc=ad,dc=utdallas,dc=edu`,
-		bindCredentials: `{{password}}`,
-		searchBase: `ou=people,dc=campus,dc=ad,dc=utdallas,dc=edu`,
-		searchFilter: `(user={{username}})` //,
-		// tlsOptions: {
-		// 	ca: [
-		// 		fs.readFileSync('')
-		// 	]
-		// }
-	}
-}
+// options = {
+// 	server: {
+// 		url: 'ldap://campus.ad.utdallas.edu',
+// 		bindDN: `cn={{username}},ou=people,dc=campus,dc=ad,dc=utdallas,dc=edu`,
+// 		bindCredentials: `{{password}}`,
+// 		searchBase: `ou=people,dc=campus,dc=ad,dc=utdallas,dc=edu`,
+// 		searchFilter: `(user={{username}})` //,
+// 		// tlsOptions: {
+// 		// 	ca: [
+// 		// 		fs.readFileSync('')
+// 		// 	]
+// 		// }
+// 	}
+// }
 
-passport.use(new ldap( options ))
+// passport.use(new ldap( options ))
 
 
 module.exports = (app, cherwell, forms) => {
