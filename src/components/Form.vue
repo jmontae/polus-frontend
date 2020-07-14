@@ -6,6 +6,7 @@
 
 	export default {
 		name: "FormComponent",
+		props: [ 'data' ],
 		data: () => {
 			return {
 				form: {},
@@ -18,10 +19,9 @@
 				subcategory: null
 			}
 		},
-		props: [ 'data' ],
 		components: { QueryComponent, SubmitButton, Breadcrumbs },
 		created: function() {
-			if( this.data ) {
+			if( this.data != null ) {
 				this.form = this.data
 				this.queries = this.form.queries
 			} else {

@@ -5,14 +5,23 @@ export default {
    name: "FormMaker",
    data() {
       return {
-         formstring: '',
-         url: `${this.serverURL}/form/create`
+         form: {},
+         file: null,
+         filename: '',
       }
    },
    components: { FormComponent },
+   computed: {
+      url: function() {
+         return `${this.serverURL}/form/create`
+      }
+   },
    methods: {
-      parse() {
-         this.form = JSON.parse(this.formstring)
+      render(files) {
+         this.filename = files[0].name
+         files[0].text().then( text => {
+            this.form = JSON.parse( text )
+         })
       }
    }
 }
@@ -20,21 +29,14 @@ export default {
 
 <template>
    <div class="page">
-		<div class="404" v-if="is404">
-			<h1>404</h1>
-			<h2>We're sorry for the inconvience, but this page doesn't exist.</h2>
-			<p>if you're looking for help, please visit <a href="https://atecio.utdallas.edu/help">atecio.utdallas.edu/help</a>.</p>
-		</div>
-		<div v-else>
-			<div class='maker'>
-				<div class="json">
-               <textarea class='textarea' v-model="formstring" v-on:keyup="parse"></textarea>
-            </div>
-            <div class='form'>
-               <FormComponent :data='form' />
-            </div>
-			</div>
-		</div>
+      <div class='maker'>
+         <div class="upload">
+            <input type='file' accept=".js, .json" @change='render($event.target.files)' />
+         </div>
+         <div class='form'>
+            <FormComponent :data='form' />
+         </div>
+      </div>
 	</div>
 </template>
 
@@ -48,6 +50,4 @@ export default {
    max-height: 70vh;
    max-width: 45%;
 }
-
-
 </style>
