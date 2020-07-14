@@ -18,34 +18,40 @@
 				subcategory: null
 			}
 		},
+		props: [ 'data' ],
 		components: { QueryComponent, SubmitButton, Breadcrumbs },
 		created: function() {
-			fetch(`${this.$serverURL}/new_session`).then( () => {
-				console.log('new session available');
-				this.ready = true;
-			});
-			//get the service classification
-			this.service = this.$route.params.service,
-			this.category = this.$route.params.category,
-			this.subcategory = this.$route.params.subcategory;
-
-			let uri = encodeURI(`${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`);
-			//fetch the form queries from the backend
-			fetch(uri)
-				.then((response) => {
-					if( response.status == 200 ) {
-						return response.json()
-					} else {
-						if(response.status == 404) {
-							this.is404 = true;
-						}
-					}
-				})
-				.then((json) => {
-					this.form = json;
-					this.queries = this.form.queries;
-					document.title += ` | ${this.form.title}`;
+			if( this.data ) {
+				this.form = this.data
+				this.queries = this.form.queries
+			} else {
+				fetch(`${this.$serverURL}/new_session`).then( () => {
+					console.log('new session available');
+					this.ready = true;
 				});
+				//get the service classification
+				this.service = this.$route.params.service,
+				this.category = this.$route.params.category,
+				this.subcategory = this.$route.params.subcategory;
+
+				let uri = encodeURI(`${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`);
+				//fetch the form queries from the backend
+				fetch(uri)
+					.then((response) => {
+						if( response.status == 200 ) {
+							return response.json()
+						} else {
+							if(response.status == 404) {
+								this.is404 = true;
+							}
+						}
+					})
+					.then((json) => {
+						this.form = json;
+						this.queries = this.form.queries;
+						document.title += ` | ${this.form.title}`;
+					});
+			}
 		},
 		methods: {
 			updateData(obj) {
@@ -65,7 +71,7 @@
 </script>
 
 <template>
-	<div class="page">
+	<div class="page container">
 		<div class="404" v-if="is404">
 			<h1>404</h1>
 			<h2>We're sorry for the inconvience, but this page doesn't exist.</h2>
@@ -88,6 +94,14 @@
 	display: block;
 	margin: 0 auto;
 	margin-bottom: 80px;
+}
+
+.container {
+	padding-top: 40px;
+	display: flex;
+	justify-content: center;
+	align-content: center;
+	margin: 0 20px;
 }
 
 </style>
