@@ -1,5 +1,5 @@
 <script>
-import FormComponent from './Form.vue'
+import QueryComponent from './Query.vue'
 
 export default {
    name: "FormMaker",
@@ -7,17 +7,22 @@ export default {
       return {
          form: {},
          file: null,
-         filename: '',
+         filename: ''
       }
    },
-   components: { FormComponent },
+   components: { QueryComponent },
    computed: {
       url: function() {
          return `${this.serverURL}/form/create`
+      },
+      uploaded: function() {
+         return JSON.stringify( this.form ) != '{}'
       }
    },
    methods: {
       render(files) {
+         this.form = {}
+
          this.filename = files[0].name
          files[0].text().then( text => {
             this.form = JSON.parse( text )
@@ -28,26 +33,20 @@ export default {
 </script>
 
 <template>
-   <div class="page">
+   <div class="page container">
       <div class='maker'>
          <div class="upload">
             <input type='file' accept=".js, .json" @change='render($event.target.files)' />
          </div>
-         <div class='form'>
-            <FormComponent :data='form' />
-         </div>
+         <div v-if="uploaded" class='form'>
+				<h1>{{ form.title }}</h1>
+				<p>{{ form.details }}</p>
+				<QueryComponent v-for="(query, index) in form.queries" :key="index" :text="query.text" :type='query.type' :options="query.options" :subqries="query.subqueries" v-on:update="updateData" />
+			</div>
       </div>
 	</div>
 </template>
 
 <style>
-.maker .textarea {
-   max-height: 100%;
-   max-width: 100%;
-}
 
-.json, .maker .form {
-   max-height: 70vh;
-   max-width: 45%;
-}
 </style>
