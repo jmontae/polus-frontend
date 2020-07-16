@@ -1,3 +1,6 @@
 module.exports = {
-    publicPath: '/help/'
+    publicPath: '/help/',
+    devServer: {
+        https: true
+      }
 }

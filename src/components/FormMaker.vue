@@ -7,7 +7,8 @@ export default {
       return {
          form: {},
          file: null,
-         filename: ''
+         filename: '',
+         submit_response: ''
       }
    },
    components: { QueryComponent },
@@ -27,6 +28,19 @@ export default {
          files[0].text().then( text => {
             this.form = JSON.parse( text )
          })
+      },
+      upload() {
+         console.log('sending request...')
+         fetch('https://localhost:4010/form/create', { mode: 'same-origin', method: 'POST', body: JSON.stringify( this.form ),  headers: { 'Content-Type': 'application/json' }})
+         .then( response => {
+            console.log('request succedded')
+            this.submit_response = response.body
+
+         }).catch( response => {
+            console.log("request failed")
+            console.log( response )
+            this.submit_response = response.body
+         })
       }
    }
 }
@@ -41,8 +55,12 @@ export default {
          <div v-if="uploaded" class='form'>
 				<h1>{{ form.title }}</h1>
 				<p>{{ form.details }}</p>
-				<QueryComponent v-for="(query, index) in form.queries" :key="index" :text="query.text" :type='query.type' :options="query.options" :subqries="query.subqueries" v-on:update="updateData" />
+				<QueryComponent v-for="(query, index) in form.queries" :key="index" :text="query.text" :type='query.type' :options="query.options" :subqries="query.subqueries" />
 			</div>
+         <div class='submit'>
+            <button class="submit_button" type="button" @click="upload">Upload</button>
+            <div id="completion" class="completion"> {{ submit_response }}</div>
+         </div>
       </div>
 	</div>
 </template>

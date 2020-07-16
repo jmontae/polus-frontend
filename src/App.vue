@@ -3,7 +3,10 @@
 
 	export default {
 		name: 'app',
-		components: { Nav }
+		components: { Nav },
+		created: function() {
+			
+		}
 	}
 </script>
 
