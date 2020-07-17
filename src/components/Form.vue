@@ -25,18 +25,6 @@
 					return 'ATEC Events and Facilities';
 				} else { return `ATEC ${this.form.service}` }
 			},
-			body: function() {
-				let text = 
-				`Team: ${this.teamName}
-
-	-- enter your email below this line--
-
-
-
-	`;
-
-				return encodeURI(text);
-			},
 			subject: function() {
 				return this.service + " / " + this.category + " / " + this.subcategory;
 			}
