@@ -14,9 +14,29 @@
 		},
 		props: ['form', 'answered'],
 		computed: {
-			url: function() {
-				return `${this.$serverURL}/submit/form`;
-			}
+			teamName: function() {
+			if(this.form.service == "Events" || this.form.service == "Facilities") {
+				return 'ATEC Events and Facilities';
+			} else { return `ATEC ${this.form.service}` }
+		},
+		body: function() {
+			let text = 
+			`Team: ${this.teamName}
+
+-- enter your email below this line--
+
+
+
+`;
+
+			return encodeURI(text);
+		},
+		subject: function() {
+			return this.service + " / " + this.category + " / " + this.subcategory;
+		},
+		mailTo: function(body) {
+			return `mailto:atec.atlas@utdallas.edu?body=${body}`;
+		}
 		},
 		mounted: function() {
 				//get the total number of queries
@@ -24,50 +44,37 @@
 
 		},
 		methods: {
-			submit() {
-				fetch(this.url, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
-					.then((response) => {
-						this.auth = false
-						//set the user's NetID in the form object
-						let netid = this.form.fields.find(el => el.name == "NetID")
-						netid.value = this.username
+			makeForm() {
+				let queries = "";
+					//process the form queries
+					this.form.queries.forEach( query => {
+						
+						//if value is an array, convert it to string and add a space after commas
+						if ( Array.isArray(query.value) ) {
+							query.value = query.value.toString()
+							query.value.replace(/,/g, ", ");
+						} 
 
-						if(response.status == 200) {
-							this.submit_success = true, this.auth = false
-							console.log(response);
-						} else {
-							this.submit_success = false, this.auth = false
-							console.log(response);
+						queries += `<p><b>${query.text}</b><br />${query.value}</p>`;
+
+						if(query.subqueries != null) {
+
+							query.subqueries.forEach(subqry => {
+								if ( Array.isArray(subqry.value) ) {
+									subqry.value = subqry.value.toString().replace(/,/g, ", ");
+								}
+
+								queries += `<p><b>${subqry.text}</b><br />${subqry.value}</p>`;
+							});
 						}
-					})
-			},
-			authenticate() {
-				fetch(`${this.$serverURL}/auth`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify( { username: this.username, password: this.password }) })
-				.then( response => {
+					});
 
-					if(response.status == 200) {
-						//submit the form
-						let auth_details = document.getElementById('auth_details')
-						auth_details.innerHTML = '<h4 style="color: green">Sending form...</h4>'
-						this.submit()
-					} else { 
-						this.auth_fail = true
-						let auth_details = document.getElementById('auth_details')
-						auth_details.innerHTML = `<h4 style="color: red">Couldn't authenticate. Please try again.</h4>`
-
-						console.log(response)
-					}
-				})
-
+					let body = `<h3>${ this.service } / ${ this.category } / ${ this.subcategory }<h3><h2>${ this.name }` + queries
+					return encodeURI(body)
 			},
 			finish() {
-				let completion_text = document.getElementById("completion");
-				completion_text.innerHTML = "please wait...";
-				this.visible = true, this.auth = true
-			},
-			close() {
-				this.visible = false;
-				if( this.submit_success ) { location.reload() }
+				window.location.href = this.mailTo( this.makeForm() )
+				location.reload()
 			}
 		}
 	}
@@ -77,27 +84,6 @@
 	<div class="submit">
 		<button class="submit_button" type="button" @click="finish">Finish</button>
 		<div id="completion" class="completion">{{ answered }}/{{ form.queries.length }} answered</div>
-		<div class="success-fail" v-if="visible">
-			<div class="success-fail_message">
-				<div id="auth" class="auth" v-if='auth'>
-					<h3>Please enter your NetID and password</h3>
-					<p id="auth_details"></p>
-					<h4 class="query_text">NetID</h4>
-					<input type="text" v-model="username" placeholder="...">
-					<h4 class="query_text">Password</h4>
-					<input type="password" v-model="password" placeholder="...">
-					<div id="auth_button" class="auth_button"><button type="button" @click="authenticate">LOG IN</button></div>
-				</div>
-				<div id="success" v-else-if="submit_success">
-					<p id='success'>Your request has been submitted successfully.</p>
-					<div class="success_button"><button type="button" @click="close">OK</button></div>
-				</div>
-				<div id="fail" v-else>
-					<p>Your request was not submitted. Please try again. If it happens again, let us know at atec_tech@utdallas.edu.</p> 
-					<div class="success_button"><button type="button" @click="close">OK</button></div>
-				</div>
-			</div>
-		</div>
 	</div>
 </template>
 

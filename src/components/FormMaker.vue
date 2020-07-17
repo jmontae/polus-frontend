@@ -31,7 +31,7 @@ export default {
       },
       upload() {
          console.log('sending request...')
-         fetch('https://localhost:4010/form/create', { mode: 'same-origin', method: 'POST', body: JSON.stringify( this.form ),  headers: { 'Content-Type': 'application/json' }})
+         fetch('http://localhost:9000/form/create', {  method: 'POST', body: JSON.stringify( this.form ),  headers: { 'Content-Type': 'application/json' }})
          .then( response => {
             console.log('request succedded')
             this.submit_response = response.body

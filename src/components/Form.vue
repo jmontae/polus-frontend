@@ -1,6 +1,5 @@
 <script>
-	import QueryComponent from "./Query.vue";
-	import SubmitButton from "./SubmitButton.vue"
+	import QueryComponent from "./Query.vue"
 	import Breadcrumbs from "./Breadcrumbs.vue"
 	//import EmailRedirect from "./EmailRedirect.vue"
 
@@ -19,13 +18,35 @@
 				subcategory: null
 			}
 		},
-		components: { QueryComponent, SubmitButton, Breadcrumbs },
+		components: { QueryComponent, Breadcrumbs },
+		computed: {
+			teamName: function() {
+				if(this.form.service == "Events" || this.form.service == "Facilities") {
+					return 'ATEC Events and Facilities';
+				} else { return `ATEC ${this.form.service}` }
+			},
+			body: function() {
+				let text = 
+				`Team: ${this.teamName}
+
+	-- enter your email below this line--
+
+
+
+	`;
+
+				return encodeURI(text);
+			},
+			subject: function() {
+				return this.service + " / " + this.category + " / " + this.subcategory;
+			}
+		},
 		created: function() {
 			if( this.data != null ) {
 				this.form = this.data
 				this.queries = this.form.queries
 			} else {
-				fetch(`${this.$serverURL}/new_session`).then( () => {
+				fetch(`http://localhost:9000/new_session`).then( () => {
 					console.log('new session available');
 					this.ready = true;
 				});
@@ -34,10 +55,11 @@
 				this.category = this.$route.params.category,
 				this.subcategory = this.$route.params.subcategory;
 
-				let uri = encodeURI(`${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`);
+				let uri = encodeURI(`${this.serverURL}/form/${this.service}/${this.category}/${this.subcategory}`);
 				//fetch the form queries from the backend
 				fetch(uri)
 					.then((response) => {
+						console.log(response)
 						if( response.status == 200 ) {
 							return response.json()
 						} else {
@@ -65,6 +87,39 @@
 							if(obj.subqueries) { qry.subqueries = obj.subqueries; }
 						}
 				});
+			},
+			makeForm() {
+				let queries = "";
+					//process the form queries
+					this.form.queries.forEach( query => {
+						
+						//if value is an array, convert it to string and add a space after commas
+						if ( Array.isArray(query.value) ) {
+							query.value = query.value.toString()
+							query.value.replace(/,/g, ", ");
+						} 
+
+						queries += `${query.text}\n${query.value}\n\n`;
+
+						if(query.subqueries != null) {
+
+							query.subqueries.forEach(subqry => {
+								if ( Array.isArray(subqry.value) ) {
+									subqry.value = subqry.value.toString().replace(/,/g, ", ");
+								}
+
+								queries += `   ${subqry.text}\n${subqry.value}\n\n`;
+							});
+						}
+					});
+
+					let body = `${ this.service } / ${ this.category } / ${ this.subcategory }\n${ this.form.title }\n\n` + queries
+					return encodeURI(body)
+			},
+			finish() {
+
+				window.location.href = `mailto:atec.atlas@utdallas.edu?body=${ this.makeForm() }`
+				location.reload()
 			}
 		}
 	}
@@ -83,7 +138,10 @@
 				<h1>{{ form.title }}</h1>
 				<p>{{ form.details }}</p>
 				<QueryComponent v-for="(query, index) in queries" :key="index" :text="query.text" :type='query.type' :options="query.options" :subqries="query.subqueries" v-on:update="updateData" />
-				<SubmitButton :form="form" :answered="answered" />
+				<div class="submit">
+					<button class="submit_button" type="button" @click="finish()">Finish</button>
+					<div id="completion" class="completion">{{ answered }}/{{ form.queries.length }} answered</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -103,5 +161,33 @@
 	align-content: center;
 	margin: 0 20px;
 }
+
+	.submit {
+		background-color: white;
+		position: fixed;
+		width: 100vw;
+		bottom: 0;
+		left: 0;
+		border-top: solid 1px gray;
+		z-index: 98;
+	}
+
+	.submit > * {
+		display: inline-block;
+	}
+
+	.submit_button {
+		margin: 10px 0px 10px 15px;
+		padding: 15px 20px;
+		text-transform: uppercase;
+		background-color: #67e67a;
+		text-decoration: none;
+		border: none;
+
+	}
+
+	.completion {
+		padding: 0 20px;
+	}
 
 </style>

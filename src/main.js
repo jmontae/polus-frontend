@@ -18,7 +18,7 @@ Vue.prototype.$hrcaseCatalog = {};
 Vue.prototype.$serverURL = process.env.VUE_APP_SERVER_BASEURL;
 Vue.prototype.$baseURL = process.env.VUE_APP_BASEURL;
 
-const router = new Router({ base: '/help/', mode: 'history', routes });
+const router = new Router({ base: '/helpdev/', mode: 'history', routes });
 
 new Vue({
 	router,
