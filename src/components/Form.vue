@@ -46,7 +46,7 @@
 				this.form = this.data
 				this.queries = this.form.queries
 			} else {
-				fetch(`http://localhost:9000/new_session`).then( () => {
+				fetch(`${this.serverURL}/new_session`).then( () => {
 					console.log('new session available');
 					this.ready = true;
 				});
