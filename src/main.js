@@ -12,17 +12,17 @@ import "./base.css"
 Vue.config.productionTip = false;
 Vue.use(Router);
 
-
-Vue.prototype.$incidentCatalog = {};
-Vue.prototype.$hrcaseCatalog = {};
-Vue.prototype.$serverURL = process.env.VUE_APP_SERVER_BASEURL;
-Vue.prototype.$baseURL = process.env.VUE_APP_BASEURL;
-
 const router = new Router({ base: '/helpdev/', mode: 'history', routes });
 
 new Vue({
 	router,
 	beforeCreate: function() {
+		Vue.prototype.$incidentCatalog = {};
+		Vue.prototype.$hrcaseCatalog = {};
+		Vue.prototype.$serverURL = process.env.VUE_APP_SERVER_BASEURL;
+		Vue.prototype.$baseURL = process.env.VUE_APP_BASEURL;
+
+		console.log(this.$serverURL)
 		//get the incident catalog
 		fetch(`${this.$serverURL}/catalog/incident`).then((response) => {
 				if( response.status == 200 ) {

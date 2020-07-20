@@ -15,7 +15,8 @@
 				answered: 0,
 				service: null,
 				category: null,
-				subcategory: null
+				subcategory: null,
+				test: null
 			}
 		},
 		components: { QueryComponent, Breadcrumbs },
@@ -29,12 +30,12 @@
 				return this.service + " / " + this.category + " / " + this.subcategory;
 			}
 		},
-		created: function() {
+		mounted: function() {
 			if( this.data != null ) {
 				this.form = this.data
 				this.queries = this.form.queries
 			} else {
-				fetch(`${this.serverURL}/new_session`).then( () => {
+				fetch(`${this.$serverURL}/new_session`).then( () => {
 					console.log('new session available');
 					this.ready = true;
 				});
@@ -42,25 +43,20 @@
 				this.service = this.$route.params.service,
 				this.category = this.$route.params.category,
 				this.subcategory = this.$route.params.subcategory;
+				console.log(`url: ${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`)
 
-				let uri = encodeURI(`${this.serverURL}/form/${this.service}/${this.category}/${this.subcategory}`);
 				//fetch the form queries from the backend
-				fetch(uri)
-					.then((response) => {
-						console.log(response)
+				fetch(`${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`)
+					.then((response) => { 
 						if( response.status == 200 ) {
-							return response.json()
-						} else {
-							if(response.status == 404) {
-								this.is404 = true;
-							}
-						}
+						return response.json() }
 					})
-					.then((json) => {
-						this.form = json;
+					.then((data ) => {
+						console.log( data )
+						this.form = data;
 						this.queries = this.form.queries;
 						document.title += ` | ${this.form.title}`;
-					});
+					})
 			}
 		},
 		methods: {
