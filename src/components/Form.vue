@@ -135,7 +135,6 @@
 .page {
 	display: block;
 	margin: 0 auto;
-	margin-bottom: 80px;
 }
 
 .container {
@@ -144,6 +143,7 @@
 	justify-content: center;
 	align-content: center;
 	margin: 0 20px;
+	margin-bottom: 80px;
 }
 
 	.submit {
