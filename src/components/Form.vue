@@ -97,12 +97,12 @@
 						}
 					});
 
-					let body = `${ this.service } / ${ this.category } / ${ this.subcategory }\n${ this.form.title }\n\n` + queries
+					let body = `Team: ${ this.form.team } \n\n${ this.form.service } / ${ this.form.category } / ${ this.form.subcategory }\n${ this.form.title }\n\n` + queries
 					return encodeURI(body)
 			},
 			finish() {
 
-				window.location.href = `mailto:atec.atlas@utdallas.edu?body=${ this.makeForm() }`
+				window.location.href = `mailto:${ this.form.type == "HRCase" ? "atec.atlas@utdallas.edu" : "atec_tech@utdallas.edu"}?body=${ this.makeForm() }`
 				location.reload()
 			}
 		}
