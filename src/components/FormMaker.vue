@@ -13,30 +13,11 @@ export default {
    },
    components: { QueryComponent },
    computed: {
-      url: function() {
+      form_url: function() {
          return `${this.serverURL}/form/create`
       },
       uploaded: function() {
          return JSON.stringify( this.form ) != '{}'
-      },
-      submit_text: function() {
-         let text = ""
-
-         switch( this.success ) {
-            case true:
-               text = "form submitted!"
-               break
-
-            case false:
-               text = "form not submitted! it may already exist, or missing classification"
-               break
-
-            default:
-               text =  'Be sure to double-check your code before submitting!'
-               break
-         }
-
-         return text
       }
    },
    methods: {
@@ -51,7 +32,7 @@ export default {
       upload() {
       
          console.log('sending request...')
-         fetch('http://localhost:9000/form/create', {  method: 'POST', body: JSON.stringify( this.form ),  headers: { 'Content-Type': 'application/json' }})
+         fetch(this.form_url, {  method: 'POST', body: JSON.stringify( this.form ),  headers: { 'Content-Type': 'application/json' }})
          .then( response => {
             this.success = response.ok
          })
@@ -73,7 +54,9 @@ export default {
 			</div>
          <div class='submit'>
             <button class="submit_button" type="button" @click="upload">Upload</button>
-            <div id="completion" class="completion"> {{ submit_text }}</div>
+            <div id="completion" class="completion" v-if="success"> Form Submitted! View the new form <a :href="form_url" target="_blank">here</a></div>
+            <div id="completion" class="completion" v-else-if="!success"> Form not submitted! it may already exist, or missing classification.</div>
+            <div id="completion" class="completion" v-else></div>
          </div>
       </div>
 	</div>
