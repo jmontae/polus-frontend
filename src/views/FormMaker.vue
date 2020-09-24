@@ -1,5 +1,5 @@
 <script>
-import QueryComponent from './Query.vue'
+import QueryComponent from '../components/Query.vue'
 
 export default {
    name: "FormMaker",

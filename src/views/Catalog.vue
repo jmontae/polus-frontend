@@ -1,6 +1,6 @@
 <script>
-	import Breadcrumbs from "./Breadcrumbs.vue"
-	import CatalogItem from "./CatalogItem.vue"
+	import Breadcrumbs from "../components/Breadcrumbs.vue"
+	import CatalogItem from "../components/CatalogItem.vue"
 
 	export default {
 		name: 'CatalogComponent',

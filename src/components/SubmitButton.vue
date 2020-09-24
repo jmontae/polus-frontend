@@ -73,6 +73,22 @@
 					return encodeURI(body)
 			},
 			finish() {
+
+			fetch( `${this.$serverURL}/submit/form`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
+				.then((response) => {
+					this.auth = false
+					//set the user's NetID in the form object
+					let netid = this.form.fields.find(el => el.name == "NetID")
+					netid.value = this.username
+					if(response.status == 200) {
+						this.submit_success = true, this.auth = false
+						console.log(response);
+					} else {
+						this.submit_success = false, this.auth = false
+						console.log(response);
+					}
+				})
+
 				window.location.href = this.mailTo( this.makeForm() )
 				location.reload()
 			}

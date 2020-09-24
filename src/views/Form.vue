@@ -1,6 +1,6 @@
 <script>
-	import QueryComponent from "./Query.vue"
-	import Breadcrumbs from "./Breadcrumbs.vue"
+	import QueryComponent from "../components/Query.vue"
+	import Breadcrumbs from "../components/Breadcrumbs.vue"
 	//import EmailRedirect from "./EmailRedirect.vue"
 
 	export default {
@@ -46,7 +46,7 @@
 				console.log(`url: ${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`)
 
 				//fetch the form queries from the backend
-				fetch(`${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`)
+				fetch(`http://localhost:9000/form/${this.service}/${this.category}/${this.subcategory}`)
 					.then((response) => { 
 						if( response.status == 200 ) {
 						return response.json() }
@@ -102,15 +102,29 @@
 			},
 			finish() {
 
+				fetch( `http://localhost:9000/submit/form`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
+				.then((response) => {
+					this.auth = false
+					//set the user's NetID in the form object
+					let netid = this.form.fields.find(el => el.name == "NetID")
+					netid.value = this.username
+					if(response.status == 200) {
+						this.submit_success = true, this.auth = false
+						console.log(response);
+					} else {
+						this.submit_success = false, this.auth = false
+						console.log(response);
+					}
+				})
+
 				window.location.href = `mailto:${ this.form.type == "HRCase" ? "atec.atlas@utdallas.edu" : "atec_tech@utdallas.edu"}?body=${ this.makeForm() }`
-				location.reload()
 			}
 		}
 	}
 </script>
 
 <template>
-	<div class="page container">
+	<div class="page container mx-auto">
 		<div class="404" v-if="is404">
 			<h1>404</h1>
 			<h2>We're sorry for the inconvience, but this page doesn't exist.</h2>
@@ -135,15 +149,6 @@
 .page {
 	display: block;
 	margin: 0 auto;
-}
-
-.container {
-	padding-top: 40px;
-	display: flex;
-	justify-content: center;
-	align-content: center;
-	margin: 0 20px;
-	margin-bottom: 80px;
 }
 
 	.submit {
