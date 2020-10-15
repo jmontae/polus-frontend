@@ -109,9 +109,14 @@ input[type=text], input[type=password] {
 	padding: 10px 5px;
 }
 
+input[type=text], textarea {
+	border: black solid 0.5px;
+}
+
 .textarea {
 	width: 80%;
 	font-size: 1em;
+	padding: 10px 10px;
 }
 
 .query_text {

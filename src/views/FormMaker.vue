@@ -44,7 +44,7 @@ export default {
 </script>
 
 <template>
-   <div class="page container">
+   <div class="form container">
       <div class='maker'>
          <div class="upload">
             <input type='file' accept=".js, .json" @change='render($event.target.files)' />

@@ -17,29 +17,10 @@ const router = new Router({ base: '/helpdev/', mode: 'history', routes });
 new Vue({
 	router,
 	beforeCreate: function() {
-		Vue.prototype.$incidentCatalog = {};
-		Vue.prototype.$hrcaseCatalog = {};
-		Vue.prototype.$serverURL = process.env.VUE_APP_SERVER_BASEURL;
-		Vue.prototype.$baseURL = process.env.VUE_APP_BASEURL;
-
-		console.log(this.$serverURL)
-		//get the incident catalog
-		fetch(`${this.$serverURL}/catalog/incident`).then((response) => {
-				if( response.status == 200 ) {
-					return response.json();
-				}
-		}).then((json) => {
-			this.$incidentCatalog = json;
-		});
-		//and the HRCase catalog
-		fetch(`${this.$serverURL}/catalog/HRCase`).then((response) => {
-				if( response.status == 200 ) {
-					return response.json();
-				}
-		}).then((json) => {
-			
-			this.$hrcaseCatalog = json;
-		});
+		Vue.prototype.$incidentCatalog = {}
+		Vue.prototype.$hrcaseCatalog = {}
+		Vue.prototype.$serverURL = process.env.VUE_APP_SERVER_BASEURL
+		Vue.prototype.$baseURL = process.env.VUE_APP_BASEURL
 	},
   render: h => h(App)
 }).$mount('#app')

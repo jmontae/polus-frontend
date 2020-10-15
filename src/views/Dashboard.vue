@@ -16,7 +16,7 @@ export default {
    },
    created: async function() {
       let body = { "tenant": 'ATEC' },
-      dashboard = await fetch(`http://localhost:9000/s/ui/dashboards/default`, {
+      dashboard = await fetch(`${this.$serverURL}/s/ui/dashboards/default`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify(body)

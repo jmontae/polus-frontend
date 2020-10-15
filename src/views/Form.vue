@@ -5,59 +5,39 @@
 
 	export default {
 		name: "FormComponent",
-		props: [ 'data' ],
 		data: () => {
 			return {
 				form: {},
 				queries: {},
 				is404: false,
+				loading: true,
 				success: false,
 				answered: 0,
-				service: null,
-				category: null,
-				subcategory: null,
 				test: null
 			}
 		},
 		components: { QueryComponent, Breadcrumbs },
 		computed: {
-			teamName: function() {
-				if(this.form.service == "Events" || this.form.service == "Facilities") {
-					return 'ATEC Events and Facilities';
-				} else { return `ATEC ${this.form.service}` }
-			},
 			subject: function() {
 				return this.service + " / " + this.category + " / " + this.subcategory;
 			}
 		},
-		mounted: function() {
-			if( this.data != null ) {
-				this.form = this.data
-				this.queries = this.form.queries
-			} else {
-				fetch(`${this.$serverURL}/new_session`).then( () => {
-					console.log('new session available');
-					this.ready = true;
-				});
-				//get the service classification
-				this.service = this.$route.params.service,
-				this.category = this.$route.params.category,
-				this.subcategory = this.$route.params.subcategory;
-				console.log(`url: ${this.$serverURL}/form/${this.service}/${this.category}/${this.subcategory}`)
-
-				//fetch the form queries from the backend
-				fetch(`http://localhost:9000/form/${this.service}/${this.category}/${this.subcategory}`)
-					.then((response) => { 
-						if( response.status == 200 ) {
-						return response.json() }
-					})
-					.then((data ) => {
-						console.log( data )
-						this.form = data;
-						this.queries = this.form.queries;
-						document.title += ` | ${this.form.title}`;
-					})
-			}
+		created: async function() {
+			//fetch the form queries from the backend
+			fetch(`${this.$serverURL}/s/ui/forms/${this.$route.params.tenant}/${this.$route.params.service}/${this.$route.params.category}/${this.$route.params.subcategory}`)
+			.then( result => {
+				if( !result.ok ) {
+					this.is404 = true
+					this.loading = false
+				} else {
+				return result.json()
+				}
+			}).then( form => {
+				this.form = form
+				this.queries = form.queries
+				document.title += ` | ${this.form.title}`
+				this.loading = false
+			})
 		},
 		methods: {
 			updateData(obj) {
@@ -101,22 +81,20 @@
 					return encodeURI(body)
 			},
 			finish() {
-
-				fetch( `http://localhost:9000/submit/form`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
-				.then((response) => {
-					this.auth = false
-					//set the user's NetID in the form object
-					let netid = this.form.fields.find(el => el.name == "NetID")
-					netid.value = this.username
-					if(response.status == 200) {
-						this.submit_success = true, this.auth = false
-						console.log(response);
-					} else {
+				this.form.fields.push( { name: 'netid', value: 'jxj174730' } )
+				fetch( `${this.$serverURL}/s/ui/forms/submit`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
+				.then( result => {
+					if( !result.ok ) {
 						this.submit_success = false, this.auth = false
-						console.log(response);
+						console.log( result );
+					} else {
+						return result.json()
 					}
+				}).then( result => {
+					this.submit_success = true, this.auth = false
+					console.log( result );
 				})
-
+				
 				window.location.href = `mailto:${ this.form.type == "HRCase" ? "atec.atlas@utdallas.edu" : "atec_tech@utdallas.edu"}?body=${ this.makeForm() }`
 			}
 		}
@@ -124,14 +102,17 @@
 </script>
 
 <template>
-	<div class="page container mx-auto">
-		<div class="404" v-if="is404">
+	<div class="form container mx-auto">
+		<div class="loading" v-if='loading'>
+			<h2>loading...</h2>
+		</div>
+		<div class="404" v-else-if="is404">
 			<h1>404</h1>
 			<h2>We're sorry for the inconvience, but this page doesn't exist.</h2>
 			<p>if you're looking for help, please visit <a href="https://atecio.utdallas.edu/help">atecio.utdallas.edu/help</a>.</p>
 		</div>
 		<div v-else>
-			<Breadcrumbs :root="this.$baseURL" :type="form.type" :service="service" :category="category" :subcategory="subcategory" />
+			<Breadcrumbs :root="this.$baseURL" :type="form.type" :service="form.service" :category="form.category" :subcategory="form.subcategory" />
 			<div class='form'>
 				<h1>{{ form.title }}</h1>
 				<p>{{ form.details }}</p>
@@ -146,9 +127,13 @@
 </template>
 
 <style>
-.page {
+.form {
 	display: block;
 	margin: 0 auto;
+
+	padding: 50px 0;
+   min-height: 100vh;
+   
 }
 
 	.submit {

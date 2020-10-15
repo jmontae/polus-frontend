@@ -15,7 +15,7 @@ const routes = [
 	{ path: '/catalog', component: CatalogComponent },
 	{ path: '/catalog/:type/:service', component: CatalogComponent },
 	{ path: '/catalog/:type/:service/:category', component: CatalogComponent },
-	{ path: '/form/:service/:category/:subcategory', component: FormComponent },
+	{ path: '/form/:tenant/:service/:category/:subcategory', component: FormComponent },
 	{ path: '/formmaker', component: FormMaker },
 	{ path: '/login', component: Login }
 

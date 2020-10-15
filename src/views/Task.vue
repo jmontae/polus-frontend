@@ -14,7 +14,7 @@ export default {
    mounted: function() {
       let id = this.$route.params.id
       
-      fetch(`http://localhost:9000/s/ui/tasks/${id}`)
+      fetch(`${this.$serverURL}/s/ui/tasks/${id}`)
       .then( response => response.json() )
       .then( task => {
          console.log( task )
