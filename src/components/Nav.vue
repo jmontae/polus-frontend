@@ -9,6 +9,14 @@
 				} else {
 					x.className = "nav";
 				}
+			},
+			login() {
+				fetch(`${this.$serverURL}/login`)
+				.then( response => {
+					response.json()
+				}).then( response => {
+					console.log( response )
+				})
 			}
 		}
 	}
@@ -21,7 +29,7 @@
 		<div class='nav-links inlne-block' id="nav-links">
 			<a class="link inline-block mx-3 py-1 px-2 rounded inline-block text-white hover:bg-gray-700" href="https://www.utdallas.edu" target="blank">Go to UTD.EDU</a>
 			<a class="link inline-block mx-3 py-1 px-2 rounded inline-block text-white hover:bg-gray-700" href="https://atecio.utdallas.edu" target="blank">Go to ATEC.IO</a>
-			<a class='mx-3 py-1 px-2 rounded inline-block text-white hover:text-black bg-purple-700 hover:bg-white' href="/login">Login</a>
+			<button type='button' class='mx-3 py-1 px-2 rounded inline-block text-white hover:text-black bg-purple-700 hover:bg-white' @click="login()">Login</button>
 			<button type='button' class='mx-3 text-gray-500 inline-block'>
 				<div v-on:click="openMenu"><a class="icon h-4 w-4 fill-current"><i class="fa fa-bars"></i></a></div>
 			</button>
