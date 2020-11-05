@@ -11,6 +11,7 @@
 				}
 			},
 			login() {
+				console.log( this.$serverURL )
 				fetch(`${this.$serverURL}/login`)
 				.then( response => {
 					response.json()
@@ -42,6 +43,7 @@
 
 <style scoped>
 header {
+	z-index: 99;
 	position: fixed;
 	width: 100vw;
 }

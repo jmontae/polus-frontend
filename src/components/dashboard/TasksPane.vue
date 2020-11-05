@@ -23,53 +23,44 @@ export default {
 </script>
 
 <template>
-   <div id="tasks" class='container block'>
+<div class='tasks container'>
       <div class="min-w-full h-10">
-         <h2 id="heading" class="pb-2">Tasks</h2>
-         <table class='table-fixed'>
-            <thead>
-               <tr>
-                  <th class="px-4 py-2 w-1/5">ID</th>
-                  <th class='px-4 py-2 w-2/5'>Title</th>
-                  <th class='px-4 py-2 w-1/5'>Date</th>
-                  <th class='px-4 py-2 w-1/5'>Creator</th>
-               </tr>
-            </thead>
-            <div class='table_items'>
-               <tr v-for="(task, key) in tasks" :key="key" id="task">
-                  <a :href="goTo(task.id)">
-                  <td class="border px-4 py-2 w-1/5">{{ task.id }}</td>
-                  <td class="border px-4 py-2 w-1/5">{{ parseDateTime( task.dated ) }}</td>
-                  <td class="border px-4 py-2 w-2/5">{{ task.title }}</td>
-                  <td class="border px-4 py-2 w-1/5">{{ task.creator.name }}</td>
-                  </a>
-               </tr>
+         <h2 id="heading" class="pb-2 font-bold">Tasks</h2>
+         <div class="list overflow-scroll border border-gray-300 rounded-lg">
+            <div v-for="(task, key) in tasks" :key="key" class="item p-2 border border-gray-300">
+               <a :href="goTo(task.id)">
+               <div class="task">
+                  <div class='info w-64'>
+                     <div id="id" class="font-bold">{{ task.tenant + task.id }}</div>
+                     <div id="title"> {{ task.title }}</div>
+                  </div>
+                  <div class='time_requestor w-64'>
+                     <div id="datetime" class="font-bold">{{ parseDateTime( task.dated ) }}</div>
+                     <div id="requestor">{{ task.creator.name || "N/A" }}</div>
+                  </div>
+                  <div class="status ">{{ task.status }}</div>
+               </div>
+               </a>
             </div>
-         </table>      
+         </div>
       </div>
    </div>
 </template>
 <style scoped>
 .tasks{
-    height: 50vh;
-    margin-bottom: 5px;
+    height: 40vh;
+   padding-bottom: 30px;
 }
 
-table{
-   width: auto;
-}
-
-.table_items {
-   border: 0.5 gray solid;
+.list {
    height: 30vh;
-   overflow: scroll;
 }
 
-tr{
-   min-width: 100%;
-   white-space: nowrap;
+.info, .time_requestor, .status {
+   display: inline-block;
 }
-td{
-   position: relative;
+
+.item:hover {
+   background-color: darksalmon;
 }
 </style>

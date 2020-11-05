@@ -5,7 +5,7 @@ import TasksPane from "../components/dashboard/TasksPane.vue"
 
 export default {
    name: 'Dashboard',
-   components: { TicketsPane, ItemsPane, TasksPane },
+   components: { ItemsPane, TicketsPane, TasksPane },
    data: () => {
       return {
          tickets: [],
@@ -33,23 +33,34 @@ export default {
       this.loading = true
 
       
+   },
+   methods: {
+      MyItems: function( value ) {
+         let filtered = { tickets: [], tasks: [] }
+         filtered['tickets'] = this.tickets.filter( ticket => ticket.owner.name == value )
+         filtered['tasks'] = this.tasks.filter( task => task.owner.name == value )
+
+         return filtered
+      },
+      TeamItems: function( value ) {
+         let filtered = { tickets: [], tasks: [] }
+         filtered['tickets'] = this.tickets.filter( ticket => ticket.team == value )
+         filtered['tasks'] = this.tasks.filter( task => task.team == value )
+
+         return filtered
+      }
    }
 }
 </script>
 
 <template>
-   <div id='dashboard' class="dashboard">      
-      <div v-if='!loading'>
-      loading...
+   <div class='dashboard'>
+      <div class='dash_left'>
+        <ItemsPane />
       </div>
-      <div v-else class="layout grid grid-cols-3 gap-2">
-         <div id='dash_left' class="dash_left col-span-1 p-12">
-            <ItemsPane v-on:click="renderItems" />
-         </div>
-         <div id="dash_right" class="dash_right col-span-2 p-12">
-               <TicketsPane :tickets="tickets" />
-               <TasksPane :tasks='tasks' />
-         </div>
+      <div class="dash_right">
+         <TicketsPane :tickets='tickets' />
+         <TasksPane :tasks="tasks" />
       </div>
    </div>
 </template>
@@ -65,16 +76,18 @@ export default {
    min-height: 100vh;
 }
 
-.dash_left {
+ .dash_left {
    position: fixed;
    left: 0;
    margin-left: 50px;
-   width: 30vw;
+   width: 20vw;
 }
 
 .dash_right {
+   max-height: 100vh;
+   width: 60vw;
    position: absolute;
-   margin-right: 10px;
+   margin-right: 80px;
    right: 0;
 }
 

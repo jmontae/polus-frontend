@@ -23,53 +23,45 @@ export default {
 </script>
 
 <template>
-   <div id="tickets" class='tickets container block'>
+   <div class='tickets container'>
       <div class="min-w-full h-10">
-         <h2 id="heading" class="pb-2">Tickets</h2>
-            <table class='table-fixed'>
-               <thead>
-                  <tr>
-                     <th class="px-4 py-2 w-1/5">ID</th>
-                     <th class='px-4 py-2 w-2/5'>Subject</th>
-                     <th class='px-4 py-2 w-1/5'>Date</th>
-                     <th class='px-4 py-2 w-1/5'>Requestor</th>
-                  </tr>
-               </thead>
-               <div class='table_items'>
-                  <tr v-for="(ticket, key) in tickets" :key="key" id="ticket">
-                     <a :href="goTo(ticket.id)">
-                     <td class="border px-4 py-2 w-1/5">{{ ticket.id }}</td>
-                     <td class="border px-4 py-2 w-1/5">{{ parseDateTime( ticket.dated ) }}</td>
-                     <td class="border px-4 py-2 w-2/5">{{ ticket.subject }}</td>
-                     <td class="border px-4 py-2 w-1/5">{{ ticket.requestor.name }}</td>
-                     </a>
-                  </tr>
+         <h2 id="heading" class="pb-2 font-bold">Tickets</h2>
+         <div class="list overflow-scroll border border-gray-300 rounded-lg">
+            <div v-for="(ticket, key) in tickets" :key="key" id='item' class="item p-2 border border-gray-300">
+               <a class='ticket' :href="goTo(ticket.id)">
+               <div class="ticket">
+                  <div class='info w-64'>
+                     <div id="id" class="font-bold">{{ ticket.tenant + ticket.id }}</div>
+                     <div id="subject"> {{ ticket.subject }}</div>
+                  </div>
+                  <div class='time_requestor w-64'>
+                     <div id="datetime" class="font-bold">{{ parseDateTime( ticket.dated ) }}</div>
+                     <div id="requestor">{{ ticket.requestor.name || "N/A" }}</div>
+                  </div>
+                  <div class="status ">{{ ticket.status }}</div>
                </div>
-            </table>   
+               </a>
+            </div>
+         </div>
       </div>
    </div>
 </template>
 <style scoped>
 .tickets{
-    height: 50vh;
-    margin-bottom: 5px;
+   height: 40vh;
+   padding-bottom: 30px;
 }
 
-table{
-   width: inherit;
-}
-
-.table_items {
-   border: 0.5 gray solid;
+.list {
    height: 30vh;
-   overflow: scroll;
 }
 
-tr{
-   min-width: 100%;
-   white-space: nowrap;
+.info, .time_requestor, .status {
+   display: inline-block;
 }
-td{
-   position: relative;
+
+.item:hover {
+   background-color: aquamarine;
 }
+
 </style>
