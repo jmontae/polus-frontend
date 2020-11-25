@@ -1,7 +1,7 @@
 <script>
 export default {
    name: 'Info',
-   props: [ 'data' ]
+   props: [ 'data', 'catalog' ]
 }
 </script>
 
@@ -14,7 +14,13 @@ export default {
          </div>
          <div id="ticket_owner" class="pb-4">
             <h4 class="font-bold pb-2">Owner</h4>
-            <div class="border border-gray-600 px-4 py-2 bg-gray-300"> {{ data.owner.name }}</div>
+            <div class="border border-gray-600 px-4 py-2 bg-gray-300"> 
+               <select v-model='data.owner.name'>
+                  <option v-for='(member, key) in data.teamMembers' :key='key' v-bind:value='member.name'>
+                     {{ member.name }}
+                  </option>
+               </select>
+            </div>
          </div>
          <div v-if="data.classification != null" id="ticket_classification" class="pb-4">
             <h4 class="font-bold pb-2">Classification</h4>

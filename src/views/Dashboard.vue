@@ -11,10 +11,10 @@ export default {
          tickets: [],
          tasks: [],
          views: {},
-         loading: false
+         loading: true
       }
    },
-   created: async function() {
+   beforeCreate: async function() {
       let body = { "tenant": 'ATEC' },
       dashboard = await fetch(`${this.$serverURL}/s/ui/dashboards/default`, {
          method: 'POST',
@@ -24,14 +24,13 @@ export default {
          response.json() 
          )
    
-      console.log( dashboard )
-
       this.tickets = dashboard.data.tickets,
       this.tasks = dashboard.data.tasks,
       this.views = dashboard.views
 
-      this.loading = true
-
+      this.loading = false
+      //get the service catalogs
+      
       
    },
    methods: {
@@ -54,7 +53,10 @@ export default {
 </script>
 
 <template>
-   <div class='dashboard'>
+   <div v-if="loading" id='loading'>
+   loading . . .
+   </div>
+   <div v-else class='dashboard'>
       <div class='dash_left'>
         <ItemsPane />
       </div>
