@@ -9,27 +9,43 @@ export default {
    data: () => {
       return {
          ticket: {},
-         catalog: {},
          teamMembers: [],
+         teams: [],
          loading: true,
          email_thread: email_thread
       }
    },
+   computed: {
+      services: function() {
+         return this.$catalog[this.ticket.type].getChildren( this.ticket.type ) || null
+      },
+      categories: function() {
+         return this.$catalog[this.ticket.type].getChildren( this.ticket.classification.service ) || null
+      },
+      subcategories: function() {
+         return this.$catalog[this.ticket.type].getChildren( this.ticket.classification.category ) || null
+      }
+      
+   },
    beforeCreate: async function() {
       let id = this.$route.params.id
+      //get the catalog
+
       //get the ticket data  
       this.ticket = await fetch(`${this.$serverURL}/s/ui/tickets/${id}`)
       .then( response => response.json() )
-      
+      //get the team members
       this.teamMembers = await fetch(`${this.$serverURL}/s/ui/users?team=${this.ticket.team}`)
+         .then( response => response.json() )
+      //get the tenant's teams
+      this.teams = await fetch(`${this.$serverURL}/s/cherwell/teams/${this.ticket.tenant}`)
          .then( response => response.json() )
          
       this.loading = false
-      //get the team members
    },
    methods: {
       save: function() {
-         fetch( `${this.$serverURL}/s/ui/tickets/save`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.ticket) })
+         fetch( `${this.$serverURL}/s/ui/tickets/save`, { method: "PUT", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.ticket) })
 				.then( result => {
 					if( !result.ok ) {
 						
@@ -41,6 +57,13 @@ export default {
 					
 					console.log( result );
 				})
+      },
+      updateOwner: function() {
+         this.teamMembers.forEach( member => {
+            if( member.name === this.ticket.owner.name ) {
+               this.ticket.owner.email = member.email
+            }
+         })
       }
    } 
 }
@@ -63,18 +86,53 @@ export default {
                   <div id="ticket_owner" class="pb-4">
                      <h4 class="font-bold pb-2">Owner</h4>
                      <div class="border border-gray-600 px-4 py-2 bg-gray-300"> 
-                        <select v-model='ticket.owner.name'>
+                        <select v-model='ticket.owner.name' @change="updateOwner()">
                            <option v-for='(member, key) in teamMembers' :key='key' v-bind:value='member.name'>
                               {{ member.name }}
                            </option>
                         </select>
                      </div>
                   </div>
+                  <div id="ticket_team" class="pb-4">
+                     <h4 class="font-bold pb-2">Owned by Team</h4>
+                     <div class="border border-gray-600 px-4 py-2 bg-gray-300"> 
+                        <select v-model='ticket.team'>
+                           <option v-for='(team, key) in teams' :key='key' v-bind:value='team.teamName'>
+                              {{ team.teamName }}
+                           </option>
+                        </select>
+                     </div>
+                  </div>
                   <div v-if="ticket.classification != null" id="ticket_classification" class="pb-4">
                      <h4 class="font-bold pb-2">Classification</h4>
-                     <div id='ticket_classification_service' class="border border-gray-600 px-4 py-2 bg-gray-300 mb-2">{{ ticket.classification.service }}</div>
-                     <div id='ticket_classification_category' class="border border-gray-600 px-4 py-2 bg-gray-300 mb-2">{{ ticket.classification.category }}</div>
-                     <div id='ticket_classification_subcategory' class="border border-gray-600 px-4 py-2 bg-gray-300 mb-2">{{ ticket.classification.subcategory }}</div>
+                     <div id='ticket_classification_service' class="border border-gray-600 px-4 py-2 bg-gray-300 mb-2">
+                        <select v-model="ticket.classification.service" 
+                        @change='{{ 
+                           ticket.classification.category = ""; 
+                           ticket.classification.subcategory = ""
+                           }}'>
+                              <option v-for='(service, key) in services' :key='key' v-bind:value='service.value'>
+                                 {{ service.value }}
+                              </option>
+                           </select>   
+                     </div>
+                     <div id='ticket_classification_category' class="border border-gray-600 px-4 py-2 bg-gray-300 mb-2">
+                        <select v-model="ticket.classification.category" 
+                        @change='{{ 
+                           ticket.classification.subcategory = "" 
+                           }}'>
+                              <option v-for='(cat, key) in categories' :key='key' v-bind:value='cat.value'>
+                                 {{ cat.value }}
+                              </option>
+                           </select>
+                     </div>
+                     <div id='ticket_classification_subcategory' class="border border-gray-600 px-4 py-2 bg-gray-300 mb-2">
+                           <select v-model="ticket.classification.subcategory">
+                              <option v-for='(subcat, key) in subcategories' :key='key' v-bind:value='subcat.value'>
+                                 {{ subcat.value }}
+                              </option>
+                           </select>
+                     </div>
                   </div>
                   <div v-if="ticket.priority != null" id="ticket_priority" class="pb-4">
                      <h4 class="font-bold pb-2">Priority</h4>
@@ -87,6 +145,7 @@ export default {
             <div id='heading' class="pb-8">
                <h1 id="ticket_number" class="text-4xl font-bold">{{ ticket.tenant + ticket.id }}</h1>
                <h2 id='ticket_subject' class="text-2xl">{{ ticket.subject }}</h2>
+               <h3 id='ticket_status' class='border border-red-700 p-4 bg-white'>{{ ticket.status }}</h3>
                <p id="ticket_description" class="pt-3 pb-10"> {{ ticket.description.text }}</p>
                <!-- <h3 id='ticket_created_date' class="text-xl font-italic">{{ ticket.dated }}</h3> -->
             </div>
@@ -128,5 +187,9 @@ export default {
 		text-decoration: none;
 		border: none;
 
-	}
+   }
+   
+   .ticket_status {
+      display: inline-block;
+   }
 </style>

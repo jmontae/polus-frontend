@@ -68,9 +68,14 @@ export class Tree {
     }
 
     parentNode.children.forEach((child) => {
-      leafsRet.push(this._displayLeafs(child));
+      leafsRet.push(this.displayLeafs(child));
     });
 
     return leafsRet.flat();
+  }
+
+  getChildren( value ) {
+    let node = this._search( value )
+    return node.children
   }
 }
