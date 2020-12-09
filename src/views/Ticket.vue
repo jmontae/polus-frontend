@@ -64,6 +64,10 @@ export default {
                this.ticket.owner.email = member.email
             }
          })
+      },
+      updateTeamMembers: async function() {
+         this.teamMembers = await fetch(`${this.$serverURL}/s/ui/users?team=${this.ticket.team}`)
+         .then( response => response.json() )
       }
    } 
 }
@@ -74,7 +78,7 @@ export default {
    <div v-if="loading" id='loading'>
    loading . . .
    </div>
-   <div v-else id='ticket' class='container p-12 mx-auto'>
+   <div v-else id='ticket' class="p-10">
       <div class="grid grid-cols-4 gap-3">
          <div id='ticket_left' class="ticket_left col-span-1 p-6">
             <div id='ticket_details'>
@@ -96,7 +100,7 @@ export default {
                   <div id="ticket_team" class="pb-4">
                      <h4 class="font-bold pb-2">Owned by Team</h4>
                      <div class="border border-gray-600 px-4 py-2 bg-gray-300"> 
-                        <select v-model='ticket.team'>
+                        <select v-model='ticket.team' @change='updateTeamMembers()'>
                            <option v-for='(team, key) in teams' :key='key' v-bind:value='team.teamName'>
                               {{ team.teamName }}
                            </option>
@@ -141,14 +145,22 @@ export default {
                </div>
             </div>
          </div>
-         <div id="ticket_right" class="ticket_right col-span-3 px-12">
+         <div id="ticket_right" class="ticket_right col-span-3 px-24 divide-y">
             <div id='heading' class="pb-8">
                <h1 id="ticket_number" class="text-4xl font-bold">{{ ticket.tenant + ticket.id }}</h1>
-               <h2 id='ticket_subject' class="text-2xl">{{ ticket.subject }}</h2>
-               <h3 id='ticket_status' class='border border-red-700 p-4 bg-white'>{{ ticket.status }}</h3>
-               <p id="ticket_description" class="pt-3 pb-10"> {{ ticket.description.text }}</p>
-               <!-- <h3 id='ticket_created_date' class="text-xl font-italic">{{ ticket.dated }}</h3> -->
+               <div id='ticket_status' class='border p-2 bg-blue-700 text-white rounded-lg'>{{ ticket.status }}</div>
             </div>
+
+               <h2 id='ticket_subject' class="text-2xl py-4">{{ ticket.subject }}</h2>
+               <div v-if="ticket.subscribers" id='ticket_subscribers' class='py-4'>
+                  <div id="title" class='font-bold pb-10 pr-5'>Subscribers</div>
+                  <textarea id='subscribers' class="w-full p-2" v-model='ticket.subscribers'></textarea>
+               </div>
+               <div id="ticket_description" class="pt-3 pb-10"> 
+                  <div id='title' class='font-bold pb-10 pr-5'>Description</div>{{ ticket.description.text }}
+               </div>
+               <!-- <h3 id='ticket_created_date' class="text-xl font-italic">{{ ticket.dated }}</h3> -->
+           
             <Editor />
             <div v-if='ticket.email'>
                <Reader :data='ticket.email.html || ticket.email.text' />
@@ -188,8 +200,19 @@ export default {
 		border: none;
 
    }
-   
-   .ticket_status {
+
+   #title {
       display: inline-block;
+      padding-bottom: 20px;
+      padding-right: 10px;
+      width: 125px;
+   }
+   
+   #ticket_status {
+      display: inline-block;
+   }
+
+   select {
+      width: 100%;
    }
 </style>

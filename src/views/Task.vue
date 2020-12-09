@@ -29,7 +29,7 @@ export default {
    <div v-if="loading" id='loading'>
    loading . . .
    </div>
-   <div v-else id='task' class='task container p-12 mx-auto'>
+   <div v-else id='task' class='task mx-auto'>
       <div class="grid grid-cols-4 gap-3">
          <div id='task_left' class="col-span-1 p-6">
             <Info :data='{ 
@@ -46,6 +46,9 @@ export default {
             </div>
             <Editor />
          </div>
+      </div>
+      <div class="submit">
+         <button class="submit_button" type="button" @click="save()">Save</button>
       </div>
    </div>
 </template>
