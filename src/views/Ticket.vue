@@ -11,6 +11,7 @@ export default {
          ticket: {},
          teamMembers: [],
          teams: [],
+         tenants: [],
          loading: true,
          email_thread: email_thread
       }
@@ -40,6 +41,8 @@ export default {
       //get the tenant's teams
       this.teams = await fetch(`${this.$serverURL}/s/cherwell/teams/${this.ticket.tenant}`)
          .then( response => response.json() )
+      this.tenants = await fetch( `${this.$serverURL}/s/ui/tenants` )
+            .then( response => response.json() )
          
       this.loading = false
    },
@@ -68,6 +71,10 @@ export default {
       updateTeamMembers: async function() {
          this.teamMembers = await fetch(`${this.$serverURL}/s/ui/users?team=${this.ticket.team}`)
          .then( response => response.json() )
+      },
+      updateTeams: async function() {
+         this.teams = await fetch(`${this.$serverURL}/s/cherwell/teams/${this.ticket.tenant}`)
+         .then( response => response.json() )
       }
    } 
 }
@@ -93,6 +100,16 @@ export default {
                         <select v-model='ticket.owner.name' @change="updateOwner()">
                            <option v-for='(member, key) in teamMembers' :key='key' v-bind:value='member.name'>
                               {{ member.name }}
+                           </option>
+                        </select>
+                     </div>
+                  </div>
+                  <div id="ticket_tenant" class="pb-4">
+                     <h4 class="font-bold pb-2">Tenant</h4>
+                     <div class="border border-gray-600 px-4 py-2 bg-gray-300"> 
+                        <select v-model='ticket.tenant' @change='updateTeams()'>
+                           <option v-for='(tenant, key) in tenants' :key='key' v-bind:value='tenant'>
+                              {{ tenant }}
                            </option>
                         </select>
                      </div>
