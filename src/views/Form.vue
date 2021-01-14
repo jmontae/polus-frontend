@@ -30,7 +30,7 @@
 					this.is404 = true
 					this.loading = false
 				} else {
-				return result.json()
+					return result.json()
 				}
 			}).then( form => {
 				this.form = form
@@ -80,29 +80,52 @@
 					let body = `Team: ${ this.form.team } \n\n${ this.form.service } / ${ this.form.category } / ${ this.form.subcategory }\n${ this.form.title }\n\n` + queries
 					return encodeURI(body)
 			},
-			finish() {
-				this.form.fields.push( { name: 'netid', value: 'jxj174730' } )
-				fetch( `${this.$serverURL}/s/ui/forms/submit`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
-				.then( result => {
-					if( !result.ok ) {
-						this.submit_success = false, this.auth = false
-						console.log( result );
-					} else {
-						return result.json()
+			checkForInvalidInputs() {
+				let inputs = document.querySelectorAll('input'),
+				inputInvalid
+				console.log( inputs )
+				inputs.forEach( input => {
+					let matches = ( input.matches || input.msMatchesSelector ),
+					match = matches.call( input, ':invalid' )
+					if( match ) {
+						inputInvalid = match
 					}
-				}).then( result => {
-					this.submit_success = true, this.auth = false
-					console.log( result );
 				})
+
+				return inputInvalid
+			},
+			finish() {
+				let invalid = this.checkForInvalidInputs()
+				if( !invalid ) {
+
+					this.form.fields.push( { name: 'netid', value: 'jxj174730' } )
+					fetch( `${this.$serverURL}/s/ui/forms/submit`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
+					.then( result => {
+						if( !result.ok ) {
+							this.submit_success = false, this.auth = false
+							console.log( result );
+						} else {
+							return result.json()
+						}
+					}).then( result => {
+						this.submit_success = true, this.auth = false
+						console.log( result );
+					})
+					
+					window.location.href = `mailto:${ this.form.type == "HRCase" ? "atec.atlas@utdallas.edu" : "atec_tech@utdallas.edu"}?body=${ this.makeForm() }`
 				
-				window.location.href = `mailto:${ this.form.type == "HRCase" ? "atec.atlas@utdallas.edu" : "atec_tech@utdallas.edu"}?body=${ this.makeForm() }`
+				} else {
+					alert( 'Some responses are invalid. Please check the responses marked red.' )
+					console.log( 'there are invalid inputs' )
+				}
+
 			}
 		}
 	}
 </script>
 
 <template>
-	<div class="form container mx-auto">
+	<div class="form container mx-auto px-10">
 		<div class="loading" v-if='loading'>
 			<h2>loading...</h2>
 		</div>

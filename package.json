@@ -14,6 +14,7 @@
     "core-js": "^3.3.2",
     "cors": "^2.8.5",
     "davexmlrpc": "^0.4.24",
+    "dompurify": "^2.2.6",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "fast-html-parser": "^1.0.1",

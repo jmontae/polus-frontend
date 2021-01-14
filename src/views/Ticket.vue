@@ -12,6 +12,7 @@ export default {
          teamMembers: [],
          teams: [],
          tenants: [],
+         subscribers: '',
          loading: true,
          email_thread: email_thread
       }
@@ -43,6 +44,11 @@ export default {
          .then( response => response.json() )
       this.tenants = await fetch( `${this.$serverURL}/s/ui/tenants` )
             .then( response => response.json() )
+
+      this.ticket.subscribers.forEach( sub => {
+         this.subscribers += `${sub.email}; `
+      })
+      
          
       this.loading = false
    },
@@ -75,6 +81,25 @@ export default {
       updateTeams: async function() {
          this.teams = await fetch(`${this.$serverURL}/s/cherwell/teams/${this.ticket.tenant}`)
          .then( response => response.json() )
+      },
+      updateSubscribers: function() {
+         let emails = this.subscribers.split('; '),
+         subs = []
+         console.log( emails )
+         emails.forEach( email => {
+            let found = false
+            this.ticket.subscribers.forEach( sub => {
+               if( sub.email == email ) {
+                  subs.push( sub )
+                  found = true
+               }
+            })
+
+            if( !found ) {
+               subs.push( { name: 'new', email: email } )
+            }
+         })
+         this.ticket.subscribers = subs
       }
    } 
 }
@@ -171,7 +196,7 @@ export default {
                <h2 id='ticket_subject' class="text-2xl py-4">{{ ticket.subject }}</h2>
                <div v-if="ticket.subscribers" id='ticket_subscribers' class='py-4'>
                   <div id="title" class='font-bold pb-10 pr-5'>Subscribers</div>
-                  <textarea id='subscribers' class="w-full p-2" v-model='ticket.subscribers'></textarea>
+                  <textarea id='subscribers' class="w-full p-2" v-model='subscribers' @change="updateSubscribers()"></textarea>
                </div>
                <div id="ticket_description" class="pt-3 pb-10"> 
                   <div id='title' class='font-bold pb-10 pr-5'>Description</div>{{ ticket.description.text }}

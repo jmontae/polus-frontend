@@ -1,4 +1,6 @@
 <script>
+import DOMPurify from 'dompurify'
+
 export default {
 	name: "QueryComponent",
 	props: ['text', 'options', 'type', 'subqries'],
@@ -37,8 +39,12 @@ export default {
 	methods: {
 		//when the query is updated, it'll emit an event to the parent for recording the value
 		updateData(text, value = null) {
+			
 			if( value ) {
-				this.$emit('update', { text, value });
+				let sanitized = DOMPurify.sanitize( value )
+				console.log( sanitized )
+				
+				this.$emit('update', { text, sanitized });
 			} else {
 				this.$emit('update', { text, subqueries: this.subqueries });
 			}
