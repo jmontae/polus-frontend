@@ -45,9 +45,11 @@ export default {
       this.tenants = await fetch( `${this.$serverURL}/s/ui/tenants` )
             .then( response => response.json() )
 
-      this.ticket.subscribers.forEach( sub => {
-         this.subscribers += `${sub.email}; `
-      })
+      if( this.ticket.subscribers ) {
+         this.ticket.subscribers.forEach( sub => {
+            this.subscribers += `${sub.email}; `
+         })
+      }
       
          
       this.loading = false
@@ -111,7 +113,12 @@ export default {
    loading . . .
    </div>
    <div v-else id='ticket' class="p-10">
-      <div class="grid grid-cols-4 gap-3">
+      <div id='heading' class="pb-8 divide-y">
+         <h1 id="ticket_number" class="text-4xl font-bold">{{ ticket.tenant + ticket.id }}</h1>
+         <div id='ticket_status' class='border p-2 my-4 bg-blue-700 text-white rounded-lg'>{{ ticket.status }}</div>
+         <h2 id='ticket_subject' class="text-2xl py-4">{{ ticket.subject }}</h2>
+      </div>
+      <div class="md:grid grid-cols-4 gap-3">
          <div id='ticket_left' class="ticket_left col-span-1 p-6">
             <div id='ticket_details'>
                <div class="container min-w-full">
@@ -187,14 +194,8 @@ export default {
                </div>
             </div>
          </div>
-         <div id="ticket_right" class="ticket_right col-span-3 px-24 divide-y">
-            <div id='heading' class="pb-8">
-               <h1 id="ticket_number" class="text-4xl font-bold">{{ ticket.tenant + ticket.id }}</h1>
-               <div id='ticket_status' class='border p-2 bg-blue-700 text-white rounded-lg'>{{ ticket.status }}</div>
-            </div>
-
-               <h2 id='ticket_subject' class="text-2xl py-4">{{ ticket.subject }}</h2>
-               <div v-if="ticket.subscribers" id='ticket_subscribers' class='py-4'>
+         <div id="ticket_right" class="ticket_right col-span-3 md:px-24 divide-y">
+               <div id='ticket_subscribers' class='py-4'>
                   <div id="title" class='font-bold pb-10 pr-5'>Subscribers</div>
                   <textarea id='subscribers' class="w-full p-2" v-model='subscribers' @change="updateSubscribers()"></textarea>
                </div>

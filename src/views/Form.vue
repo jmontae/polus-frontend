@@ -19,7 +19,7 @@
 		components: { QueryComponent, Breadcrumbs },
 		computed: {
 			subject: function() {
-				return this.service + " / " + this.category + " / " + this.subcategory;
+				return this.form.service + " / " + this.form.category + " / " + this.form.subcategory;
 			}
 		},
 		created: async function() {
@@ -109,7 +109,9 @@
 						}
 					}).then( result => {
 						this.submit_success = true, this.auth = false
+						alert('form submitted successfully')
 						console.log( result );
+						window.location.reload()
 					})
 					
 					window.location.href = `mailto:${ this.form.type == "HRCase" ? "atec.atlas@utdallas.edu" : "atec_tech@utdallas.edu"}?body=${ this.makeForm() }`
@@ -125,7 +127,7 @@
 </script>
 
 <template>
-	<div class="form container mx-auto px-10">
+	<div class="form container mx-auto">
 		<div class="loading" v-if='loading'>
 			<h2>loading...</h2>
 		</div>
@@ -134,9 +136,9 @@
 			<h2>We're sorry for the inconvience, but this page doesn't exist.</h2>
 			<p>if you're looking for help, please visit <a href="https://atecio.utdallas.edu/help">atecio.utdallas.edu/help</a>.</p>
 		</div>
-		<div v-else>
+		<div v-else class="m-2">
 			<Breadcrumbs :root="this.$baseURL" :type="form.type" :service="form.service" :category="form.category" :subcategory="form.subcategory" />
-			<div class='form'>
+			<div class='form_content m-5'>
 				<h1>{{ form.title }}</h1>
 				<p>{{ form.details }}</p>
 				<QueryComponent v-for="(query, index) in queries" :key="index" :text="query.text" :type='query.type' :options="query.options" :subqries="query.subqueries" v-on:update="updateData" />

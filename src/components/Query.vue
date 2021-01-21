@@ -43,10 +43,10 @@ export default {
 			if( value ) {
 				let sanitized = DOMPurify.sanitize( value )
 				console.log( sanitized )
-				
-				this.$emit('update', { text, sanitized });
+
+				this.$emit('update', { text: text, value: sanitized });
 			} else {
-				this.$emit('update', { text, subqueries: this.subqueries });
+				this.$emit('update', { text: text, subqueries: this.subqueries });
 			}
 		}
 	}
