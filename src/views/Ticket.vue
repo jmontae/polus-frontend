@@ -13,6 +13,7 @@ export default {
          teams: [],
          tenants: [],
          subscribers: '',
+         success: false,
          loading: true,
          email_thread: email_thread
       }
@@ -65,7 +66,7 @@ export default {
 						return result.json()
 					}
 				}).then( result => {
-					
+					this.success = true
 					console.log( result );
 				})
       },
@@ -90,13 +91,14 @@ export default {
          console.log( emails )
          emails.forEach( email => {
             let found = false
-            this.ticket.subscribers.forEach( sub => {
-               if( sub.email == email ) {
-                  subs.push( sub )
-                  found = true
-               }
-            })
-
+            if( this.ticket.subscribers ) {
+               this.ticket.subscribers.forEach( sub => {
+                  if( sub.email == email ) {
+                     subs.push( sub )
+                     found = true
+                  }
+               })
+            }
             if( !found ) {
                subs.push( { name: 'new', email: email } )
             }
@@ -200,7 +202,7 @@ export default {
                   <textarea id='subscribers' class="w-full p-2" v-model='subscribers' @change="updateSubscribers()"></textarea>
                </div>
                <div id="ticket_description" class="pt-3 pb-10"> 
-                  <div id='title' class='font-bold pb-10 pr-5'>Description</div>{{ ticket.description.text }}
+                  <div id='title' class='font-bold pb-10 pr-5'>Description</div><div id="desc_html" v-html="ticket.description.html"></div>
                </div>
                <!-- <h3 id='ticket_created_date' class="text-xl font-italic">{{ ticket.dated }}</h3> -->
            
@@ -212,6 +214,7 @@ export default {
       </div>
       <div class="submit">
          <button class="submit_button" type="button" @click="save()">Save</button>
+         <div v-if="success">Ticket saved</div>
       </div>
    </div>
 </template>
@@ -235,7 +238,7 @@ export default {
 	}
 
 	.submit_button {
-		margin: 10px 0px 10px 15px;
+		margin: 10px 15px 10px 15px;
 		padding: 15px 20px;
 		text-transform: uppercase;
 		background-color: #67e67a;
@@ -249,6 +252,7 @@ export default {
       padding-bottom: 20px;
       padding-right: 10px;
       width: 125px;
+
    }
    
    #ticket_status {

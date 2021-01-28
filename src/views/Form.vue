@@ -97,24 +97,22 @@
 			finish() {
 				let invalid = this.checkForInvalidInputs()
 				if( !invalid ) {
-
-					this.form.fields.push( { name: 'netid', value: 'jxj174730' } )
+					console.log( this.$serverURL)
+					this.form.fields.push( { name: 'CustomerEmail', value: 'jxj174730@utdallas.edu' }, { name: 'OnBehalfOfNetID', value: 'jxj174730'} )
 					fetch( `${this.$serverURL}/s/ui/forms/submit`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) })
 					.then( result => {
 						if( !result.ok ) {
 							this.submit_success = false, this.auth = false
 							console.log( result );
 						} else {
-							return result.json()
+							this.submit_success = true, this.auth = false
+							alert('form submitted successfully')
+							console.log( result );
+							window.location.reload()
 						}
-					}).then( result => {
-						this.submit_success = true, this.auth = false
-						alert('form submitted successfully')
-						console.log( result );
-						window.location.reload()
 					})
 					
-					window.location.href = `mailto:${ this.form.type == "HRCase" ? "atec.atlas@utdallas.edu" : "atec_tech@utdallas.edu"}?body=${ this.makeForm() }`
+					
 				
 				} else {
 					alert( 'Some responses are invalid. Please check the responses marked red.' )
