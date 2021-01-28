@@ -13,6 +13,7 @@ export default {
          teams: [],
          tenants: [],
          subscribers: '',
+         incidentStatus: [],
          success: false,
          loading: true,
          email_thread: email_thread
@@ -45,6 +46,16 @@ export default {
          .then( response => response.json() )
       this.tenants = await fetch( `${this.$serverURL}/s/ui/tenants` )
             .then( response => response.json() )
+
+      this.incidentStatus = await fetch(`${this.$serverURL}/s/cherwell/object/incidentstatus`)
+      .then( response => response.json() )
+      .then( objs => {
+         let items = []
+         objs.forEach( obj => {
+            items.push( obj.busObPublicId )
+         })
+         return items
+      })
 
       if( this.ticket.subscribers ) {
          this.ticket.subscribers.forEach( sub => {
@@ -117,13 +128,22 @@ export default {
    <div v-else id='ticket' class="p-10">
       <div id='heading' class="pb-8 divide-y">
          <h1 id="ticket_number" class="text-4xl font-bold">{{ ticket.tenant + ticket.id }}</h1>
-         <div id='ticket_status' class='border p-2 my-4 bg-blue-700 text-white rounded-lg'>{{ ticket.status }}</div>
          <h2 id='ticket_subject' class="text-2xl py-4">{{ ticket.subject }}</h2>
       </div>
       <div class="md:grid grid-cols-4 gap-3">
          <div id='ticket_left' class="ticket_left col-span-1 p-6">
             <div id='ticket_details'>
                <div class="container min-w-full">
+                  <div id='ticket_status' class='pb-10'>
+                     <h4 class="font-bold pb-2">Status</h4>
+                     <div class="border border-gray-600 px-4 py-2 bg-gray-300">
+                        <select v-model="ticket.status">
+                           <option v-for='(option, key) in incidentStatus' :key='key' v-bind:value='option'>
+                              {{ option }}
+                           </option>
+                        </select>
+                     </div>
+                  </div>
                   <div id="ticket_requestor" class="pb-4">
                      <h4 class="font-bold pb-2">Requestor</h4>
                      <div class="border border-gray-600 px-4 py-2 bg-gray-300">{{ ticket.requestor.name }}</div>
@@ -255,10 +275,6 @@ export default {
 
    }
    
-   #ticket_status {
-      display: inline-block;
-   }
-
    select {
       width: 100%;
    }
