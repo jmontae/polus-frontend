@@ -27,6 +27,7 @@
 			fetch(`${this.$serverURL}/s/ui/forms/${this.$route.params.tenant}/${this.$route.params.service}/${this.$route.params.category}/${this.$route.params.subcategory}`)
 			.then( result => {
 				if( !result.ok ) {
+					console.log( result )
 					this.is404 = true
 					this.loading = false
 				} else {

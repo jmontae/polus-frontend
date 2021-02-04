@@ -41,6 +41,14 @@ new Vue({
 		Vue.prototype.$catalog.incident = new Tree( catalogIncident._root )
 		Vue.prototype.$catalog.hrcase= new Tree( catalogHRcase._root )
 
+		Vue.prototype.$user = {
+			name: `Jer'Maine Jones`,
+			email: 'jermaine.jones@utdallas.edu',
+			team: 'ATEC Tech Resources'
+		}
+
+
+
 	},
   render: h => h(App)
 }).$mount('#app')

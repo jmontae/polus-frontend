@@ -15,6 +15,8 @@ export default {
          subscribers: '',
          incidentStatus: [],
          success: false,
+         fail: false,
+         error: '',
          loading: true,
          email_thread: email_thread
       }
@@ -66,20 +68,33 @@ export default {
          
       this.loading = false
    },
+   updated: function() {
+      let node = document.getElementById('submit')
+      if( node.disabled ) { node.disabled = !node.disabled }
+   },
    methods: {
-      save: function() {
-         fetch( `${this.$serverURL}/s/ui/tickets/save`, { method: "PUT", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.ticket) })
-				.then( result => {
-					if( !result.ok ) {
-						
-						console.log( result );
-					} else {
-						return result.json()
-					}
-				}).then( result => {
-					this.success = true
-					console.log( result );
-				})
+      save: async function() {
+         this.success = this.fail = false
+         try {
+            let result = await fetch( `${this.$serverURL}/s/ui/tickets/save`, { method: "PUT", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.ticket) })
+            if( result.ok ) {
+               console.log('good?')
+               this.success = true
+               let body = await result.json()
+               console.log( result )
+               console.log( body )
+            } else {
+               console.log('error?')
+               this.fail = true
+               let body = await result.json()
+               console.log( body.err )
+               this.error = body.err
+
+            }
+         } catch( e ) {
+            console.log('error?')
+            console.log( e )
+         }
       },
       updateOwner: function() {
          this.teamMembers.forEach( member => {
@@ -211,7 +226,14 @@ export default {
                   </div>
                   <div v-if="ticket.priority != null" id="ticket_priority" class="pb-4">
                      <h4 class="font-bold pb-2">Priority</h4>
-                     <div class="border border-gray-600 px-4 py-2 bg-gray-300">{{ ticket.priority }}</div>
+                     <div class="border border-gray-600 px-4 py-2 bg-gray-300">
+                        <select v-model="ticket.priority">
+                           <option  value='Low'>Low</option>
+                           <option  value='Medium'>Medium</option>
+                           <option  value='High'>High</option>
+                        </select>
+                     </div>
+
                   </div>
                </div>
             </div>
@@ -233,8 +255,9 @@ export default {
          </div>
       </div>
       <div class="submit">
-         <button class="submit_button" type="button" @click="save()">Save</button>
+         <button id='submit' class="submit_button" type="button" @click="save()" disabled>Save</button>
          <div v-if="success">Ticket saved</div>
+         <div v-if='fail'>Ticket did not save. {{ error }}</div>
       </div>
    </div>
 </template>
@@ -265,6 +288,10 @@ export default {
 		text-decoration: none;
 		border: none;
 
+   }
+
+   .submit_button:disabled {
+      background-color: gray;
    }
 
    #title {
