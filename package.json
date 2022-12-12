@@ -16,7 +16,7 @@
     "davexmlrpc": "^0.4.24",
     "dompurify": "^2.2.6",
     "dotenv": "^8.2.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "fast-html-parser": "^1.0.1",
     "glob": "^7.1.6",
     "passport": "^0.4.1",
